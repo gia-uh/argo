@@ -1,5 +1,9 @@
 # ARGO
 
+![PyPI - Version](https://img.shields.io/pypi/v/argo-ai) ![GitHub License](https://img.shields.io/github/license/apiad/argo)
+
+
+
 **ARGO** - *Agent-based Reasoning, Governance, and Orchestration* - is a Python framework for building powerful, collaborative multi-agent systems powered by large language models (LLMs) and other AI components. Inspired by the legendary ship Argo that carried the Argonauts on their epic quest, ARGO unites diverse intelligent agents to reason, govern, and orchestrate complex workflows together.
 
 In Greek mythology, the Argo was a ship built by the master craftsman Argus and guided by the goddess Athena. It carried a crew of heroes-the Argonauts-on a daring quest for the Golden Fleece. This legendary voyage symbolizes teamwork, leadership, and the power of collective effort to overcome challenging tasks.
