@@ -1,0 +1,10 @@
+[project]
+name = "argo-ai"
+version = "0.1.0"
+description = "Agent-based Reasoning, Governance, and Orchestration"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "openai>=1.76.0",
+    "pydantic>=2.11.3",
+]
