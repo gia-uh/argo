@@ -36,26 +36,29 @@ class LLM:
         self.client = openai.AsyncOpenAI(base_url=base_url, api_key=api_key)
 
     async def chat(
-        self, messages: list[Message], callback=None, stream=False, **kwargs
+        self, messages: list[Message], callback=None, **kwargs
     ):
-        response = []
+        result = []
 
-        async for chunk in self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model=self.model,
             messages=[message.model_dump() for message in messages],
             stream=True,
             **kwargs,
-        ):
+        )
+
+        async for chunk in response:
+            content = chunk.choices[0].delta.content
+
+            if content is None:
+                continue
+
             if callback:
-                await callback(chunk)
+                await callback(content)
 
-            if stream:
-                yield chunk.choices[0].delta.content
-            else:
-                response.append(chunk.choices[0].delta.content)
+            result.append(content)
 
-        if not stream:
-            return "".join(response)
+        return "".join(result)
 
     async def parse(
         self, model: Type[T], messages: list[Message], **kwargs

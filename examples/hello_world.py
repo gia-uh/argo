@@ -1,6 +1,7 @@
 from argo import Agent, LLM, Message
 import dotenv
 import os
+import asyncio
 
 
 dotenv.load_dotenv()
@@ -14,11 +15,24 @@ agent = Agent(
 
 
 @agent.skill
-def converse(llm:LLM, messages: list[Message]) -> str:
-    return llm.chat(messages)
+async def converse(llm:LLM, messages: list[Message]) -> str:
+    """Casual chat with the user.
+    """
+    return await llm.chat(messages)
 
 
-while True:
-    user_input = input("You: ")
-    response = agent.act(user_input)
-    print(f"Bob: {response}")
+async def run():
+    history = []
+
+    while True:
+        try:
+            user_input = input(">>> ")
+            history.append(Message.user(user_input))
+            response = await agent.perform(history)
+            history.append(response)
+            print(response.content)
+        except (EOFError, KeyboardInterrupt):
+            break
+
+
+asyncio.run(run())
