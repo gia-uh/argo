@@ -35,9 +35,14 @@ pip install argo
 
 TODO
 
-## Why ARGO?
+## Changelog
 
-By combining autonomous reasoning, structured governance, and dynamic orchestration, ARGO unlocks the full potential of multi-agent LLM systems. Inspired by the mythic voyage of the Argo, this framework enables scalable, robust, and efficient AI collaboration for complex real-world challenges.
+### Roadmap
+
+### 0.1.2
+
+- Basic architecture for agents, skills, and tools.
+
 
 ## Contributing
 
