@@ -14,11 +14,15 @@ agent = Agent(
 )
 
 
+async def callback(chunk:str):
+    print(chunk, end="")
+
+
 @agent.skill
 async def converse(llm:LLM, messages: list[Message]) -> str:
     """Casual chat with the user.
     """
-    return await llm.chat(messages)
+    return await llm.chat(messages, callback)
 
 
 async def run():
@@ -30,7 +34,7 @@ async def run():
             history.append(Message.user(user_input))
             response = await agent.perform(history)
             history.append(response)
-            print(response.content)
+            print()
         except (EOFError, KeyboardInterrupt):
             break
 

@@ -23,6 +23,8 @@ The orchestration component manages communication, task allocation, and workflow
 
 ## Features
 
+> NOTE: ARGO is a work in progress. The current state is a proof of concept and is not yet ready for production use.
+
 - **Multi-agent collaboration:** Build teams of LLM-powered agents working in concert.
 - **Structured governance:** Define organizational models and enforce collaboration protocols.
 - **Flexible orchestration:** Coordinate complex workflows with customizable communication and task delegation.
