@@ -1,5 +1,6 @@
 import abc
 import inspect
+from typing import TypeVar
 
 from pydantic import BaseModel, create_model
 from .llm import LLM, Message
@@ -110,6 +111,48 @@ This is your description:
 """
 
 
+DEFAULT_CHOOSE_PROMPT = """
+Given the previous messages, you have
+to select one and only one of the following items
+to reply:
+
+{items}
+
+First provide a reasoning for your response,
+and then the right selection.
+
+Reply with a JSON object in the following format:
+
+{format}
+"""
+
+
+DEFAULT_DECIDE_PROMPT = """
+Given the previous messages, you have
+to reply only with True or False.
+
+First provide a reasoning for your response,
+and then your answer.
+
+Reply with a JSON object in the following format:
+
+{format}
+"""
+
+
+T = TypeVar("T")
+
+
+class ChooseResponse(BaseModel):
+    reasoning: str
+    selection: str
+
+
+class DecideResponse(BaseModel):
+    reasoning: str
+    answer: bool
+
+
 class Agent:
     def __init__(
         self,
@@ -147,13 +190,57 @@ class Agent:
         return self._llm
 
     async def perform(self, messages: list[Message]) -> Message:
+        """Main entrypoint for the agent.
+
+        This method will select the right skill to perform the task and then execute it.
+        The skill is selected based on the messages and the skills available to the agent.
+        """
         messages = [Message.system(self._system_prompt)] + messages
         skill: Skill = await self._skill_selector(self, self._skills, messages)
         return await skill.execute(self, messages)
 
     async def reply(self, messages: list[Message]) -> Message:
-        response = await self._llm.chat(messages)
+        """Reply to the provided messages.
+
+        This method will use the LLM to generate a response to the provided messages.
+        It does not use any skills.
+        Mostly useful inside skills to finish the conversation.
+        """
+        response = await self.llm.chat(messages)
         return Message.assistant(response)
+
+    async def choose(self, options: list[T], messages: list[Message]) -> T:
+        """Choose one option out of many.
+
+        This method will use the LLM to choose one option out of many.
+        It does not use any skills.
+        Mostly useful inside skills to make decisions.
+        """
+        options = {str(t): t for t in options}
+
+        prompt = DEFAULT_CHOOSE_PROMPT.format(
+            options="\n".join([f"- {option}" for option in options]),
+            format=ChooseResponse.model_json_schema(),
+        )
+        response = await self.llm.parse(
+            ChooseResponse, messages + [Message.system(prompt)]
+        )
+        return options[response.selection]
+
+    async def decide(self, messages: list[Message]) -> bool:
+        """Decide True or False.
+
+        This method will use the LLM to decide True or False.
+        It does not use any skills.
+        Mostly useful inside skills to make decisions.
+        """
+        prompt = DEFAULT_DECIDE_PROMPT.format(
+            format=DecideResponse.model_json_schema(),
+        )
+        response = await self.llm.parse(
+            DecideResponse, messages + [Message.system(prompt)]
+        )
+        return response.answer
 
     def add_skill(self, skill: Skill):
         self._skills.append(skill)

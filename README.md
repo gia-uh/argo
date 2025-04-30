@@ -44,10 +44,19 @@ TODO
 
 ### Roadmap
 
+- Improve documentation and examples.
+- Add skill definition via YAML.
+- Add tool definition via YAML and REST endpoints.
+- Add support for skill composition.
+- Add support for multi-agent collaboration and delegation.
+
+### 0.1.3
+
+- Automatic skill selection and tool invocation.
+
 ### 0.1.2
 
 - Basic architecture for agents, skills, and tools.
-
 
 ## Contributing
 

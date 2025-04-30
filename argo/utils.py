@@ -23,14 +23,12 @@ Reply with a JSON object in the following format:
 
 
 async def default_skill_selector(agent:Agent, skills: list[Skill], messages: list[Message]) -> Skill:
-    llm = agent._llm
-
     prompt = DEFAULT_SKILLS_PROMPT.format(
         skills="\n".join([f"- {skill.name}: {skill.description}" for skill in skills]),
         format=SkillSelection.model_json_schema()
     )
 
-    skill: SkillSelection = await llm.parse(SkillSelection, messages + [Message.system(prompt)])
+    skill: SkillSelection = await agent.llm.parse(SkillSelection, messages + [Message.system(prompt)])
 
     for s in skills:
         if s.name == skill.skill:
