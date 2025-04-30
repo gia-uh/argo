@@ -1,7 +1,7 @@
 import abc
 import inspect
 
-from pydantic import BaseModel
+from pydantic import BaseModel, create_model
 from .llm import LLM, Message
 
 
@@ -19,7 +19,7 @@ class Skill:
         return self._description
 
     @abc.abstractmethod
-    async def execute(self, llm: LLM, messages: list[Message], agent: "Agent"):
+    async def execute(self, agent: "Agent", messages: list[Message]) -> Message:
         pass
 
 
@@ -28,15 +28,26 @@ class _MethodSkill(Skill):
         super().__init__(name, description)
         self._target = target
 
-    async def execute(self, llm: LLM, messages: list[Message], agent: "Agent"):
-        return await self._target(llm, messages)
+    async def execute(self, agent: "Agent", messages: list[Message]) -> Message:
+        return await self._target(agent, messages)
 
 
-class Parameter(BaseModel):
-    name: str
-    description: str
-    type: str
-    required: bool = True
+DEFAULT_TOOL_INVOKE_PROMPT = """
+Given the previous messages, your task
+is to generate parameters to invoke the following tool.
+
+Name: {name}.
+
+Parameters:
+{parameters}
+
+Description:
+{description}
+
+Return the appropriate parameters as a JSON object
+with the following format:
+{format}
+"""
 
 
 class Tool:
@@ -53,12 +64,29 @@ class Tool:
         return self._description
 
     @abc.abstractmethod
-    def parameters(self) -> list[Parameter]:
+    def parameters(self) -> dict[str, type]:
         pass
 
     @abc.abstractmethod
-    def run(self, **kwargs):
+    async def run(self, **kwargs):
         pass
+
+    async def invoke(self, agent: "Agent", messages: list[Message]) -> str:
+        model_cls: type[BaseModel] = create_model(
+            "Tool_" + self.name, **self.parameters()
+        )
+
+        prompt = DEFAULT_TOOL_INVOKE_PROMPT.format(
+            name=self.name,
+            parameters=self.parameters(),
+            description=self.description,
+            format=model_cls.model_json_schema(),
+        )
+
+        response: BaseModel = await agent.llm.parse(
+            model_cls, messages + [Message.system(prompt)]
+        )
+        return await self.run(**response.model_dump())
 
 
 class _MethodTool(Tool):
@@ -68,10 +96,10 @@ class _MethodTool(Tool):
 
     def parameters(self):
         args = inspect.get_annotations(self._target)
-        return [
-            Parameter(name=name, description="", type=type.__name__)
-            for name, type in args.items()
-        ]
+        return {name: type for name, type in args.items() if name != "return"}
+
+    async def run(self, **kwargs):
+        return await self._target(**kwargs)
 
 
 DEFAULT_SYSTEM_PROMPT = """
@@ -114,10 +142,17 @@ class Agent:
     def description(self):
         return self._description
 
+    @property
+    def llm(self):
+        return self._llm
+
     async def perform(self, messages: list[Message]) -> Message:
         messages = [Message.system(self._system_prompt)] + messages
         skill: Skill = await self._skill_selector(self, self._skills, messages)
-        response = await skill.execute(self._llm, messages, self)
+        return await skill.execute(self, messages)
+
+    async def reply(self, messages: list[Message]) -> Message:
+        response = await self._llm.chat(messages)
         return Message.assistant(response)
 
     def add_skill(self, skill: Skill):

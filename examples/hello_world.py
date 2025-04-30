@@ -7,22 +7,22 @@ import asyncio
 dotenv.load_dotenv()
 
 
-agent = Agent(
-    name="Bob",
-    description="A helpful assistant.",
-    llm=LLM(model=os.getenv("MODEL")),
-)
-
-
 async def callback(chunk:str):
     print(chunk, end="")
 
 
+agent = Agent(
+    name="Bob",
+    description="A helpful assistant.",
+    llm=LLM(model=os.getenv("MODEL"), callback=callback),
+)
+
+
 @agent.skill
-async def converse(llm:LLM, messages: list[Message]) -> str:
+async def converse(agent:Agent, messages: list[Message]) -> str:
     """Casual chat with the user.
     """
-    return await llm.chat(messages, callback)
+    return await agent.reply(messages)
 
 
 async def run():

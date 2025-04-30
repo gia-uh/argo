@@ -1,4 +1,4 @@
-from typing import Type, TypeVar
+from typing import Callable, Type, TypeVar
 import openai
 from pydantic import BaseModel
 import os
@@ -22,10 +22,11 @@ class Message(BaseModel):
 
 
 T = TypeVar("T", bound=BaseModel)
+LLMCallback = Callable[[str], None]
 
 
 class LLM:
-    def __init__(self, model: str, base_url: str = None, api_key: str = None):
+    def __init__(self, model: str, callback: LLMCallback = None, base_url: str = None, api_key: str = None):
         self.model = model
 
         if base_url is None:
@@ -34,27 +35,26 @@ class LLM:
             api_key = os.getenv("API_KEY")
 
         self.client = openai.AsyncOpenAI(base_url=base_url, api_key=api_key)
+        self.callback = callback
 
     async def chat(
-        self, messages: list[Message], callback=None, **kwargs
-    ):
+        self, messages: list[Message], **kwargs
+    ) -> str:
         result = []
 
-        response = await self.client.chat.completions.create(
+        async for chunk in  await self.client.chat.completions.create(
             model=self.model,
             messages=[message.model_dump() for message in messages],
             stream=True,
             **kwargs,
-        )
-
-        async for chunk in response:
+        ):
             content = chunk.choices[0].delta.content
 
             if content is None:
                 continue
 
-            if callback:
-                await callback(content)
+            if self.callback:
+                await self.callback(content)
 
             result.append(content)
 
