@@ -19,7 +19,7 @@ agent = Agent(
 
 
 @agent.skill
-async def converse(agent:Agent, messages: list[Message]) -> str:
+async def converse(agent:Agent, messages: list[Message]) -> Message:
     """Casual chat with the user.
     """
     return await agent.reply(messages)
