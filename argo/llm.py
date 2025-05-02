@@ -76,8 +76,9 @@ class LLM:
             **kwargs,
         )
 
-        if self.verbose:
-            d = response.choices[0].message.parsed.model_dump()
-            rich.print(d)
+        result = response.choices[0].message.parsed
 
-        return response.choices[0].message.parsed
+        if self.verbose:
+            rich.print(result)
+
+        return result

@@ -46,7 +46,7 @@ Parameters:
 Description:
 {description}
 
-Return the appropriate parameters as a JSON object
+Return the reasoning and parameters as a JSON object
 with the following format:
 {format}
 """
@@ -75,7 +75,7 @@ class Tool:
 
     async def invoke(self, agent: "Agent", messages: list[Message]) -> str:
         model_cls: type[BaseModel] = create_model(
-            "Tool_" + self.name, **self.parameters()
+            self.name, **self.parameters()
         )
 
         prompt = DEFAULT_TOOL_INVOKE_PROMPT.format(
