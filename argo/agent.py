@@ -1,4 +1,5 @@
 import abc
+import functools
 import inspect
 from typing import TypeVar
 
@@ -140,6 +141,21 @@ Reply with a JSON object in the following format:
 """
 
 
+DEFAULT_TOOL_CHOOSE_PROMPT = """
+Given the previous messages, you have to pick
+one of the following tools to invoke.
+
+{tools}
+
+First provide a reasoning for your response,
+and then the right selection.
+
+Reply with a JSON object in the following format:
+
+{format}
+"""
+
+
 T = TypeVar("T")
 
 
@@ -242,6 +258,28 @@ class Agent:
         )
         return response.answer
 
+    async def pick(self,  messages: list[Message], tools: list[Tool] = None) -> Tool:
+        """Pick a tool.
+
+        This method will use the LLM to pick a tool from the list of tools.
+        It does not use any skills.
+        Mostly useful inside skills to make decisions.
+        """
+        if tools is None:
+            tools = self._tools
+
+        tool_str = { tool.name: tool.description for tool in tools }
+        mapping = { tool.name: tool for tool in tools }
+
+        prompt = DEFAULT_TOOL_CHOOSE_PROMPT.format(
+            tools=tool_str,
+            format=ChooseResponse.model_json_schema(),
+        )
+        response = await self.llm.parse(
+            ChooseResponse, messages + [Message.system(prompt)]
+        )
+        return mapping[response.selection]
+
     def add_skill(self, skill: Skill):
         self._skills.append(skill)
 
@@ -249,6 +287,9 @@ class Agent:
         self._tools.append(tool)
 
     def skill(self, target):
+        if not inspect.iscoroutinefunction(target):
+            raise ValueError("Skill must be a coroutine function.")
+
         name = target.__name__
         description = inspect.getdoc(target)
         skill = _MethodSkill(name, description, target)
@@ -256,6 +297,14 @@ class Agent:
         return skill
 
     def tool(self, target):
+        # BUG: Doesn't work for sync method
+        if not inspect.iscoroutinefunction(target):
+            @functools.wraps(target)
+            async def wrapper(*args, **kwargs):
+                return target(*args, **kwargs)
+
+            target = wrapper
+
         name = target.__name__
         description = inspect.getdoc(target)
         tool = _MethodTool(name, description, target)

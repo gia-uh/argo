@@ -1,4 +1,6 @@
 from typing import Callable, Type, TypeVar
+import rich
+import json
 import openai
 from pydantic import BaseModel
 import os
@@ -26,8 +28,16 @@ LLMCallback = Callable[[str], None]
 
 
 class LLM:
-    def __init__(self, model: str, callback: LLMCallback = None, base_url: str = None, api_key: str = None):
+    def __init__(
+        self,
+        model: str,
+        callback: LLMCallback = None,
+        verbose: bool = False,
+        base_url: str = None,
+        api_key: str = None,
+    ):
         self.model = model
+        self.verbose = verbose
 
         if base_url is None:
             base_url = os.getenv("BASE_URL")
@@ -37,12 +47,10 @@ class LLM:
         self.client = openai.AsyncOpenAI(base_url=base_url, api_key=api_key)
         self.callback = callback
 
-    async def chat(
-        self, messages: list[Message], **kwargs
-    ) -> str:
+    async def chat(self, messages: list[Message], **kwargs) -> str:
         result = []
 
-        async for chunk in  await self.client.chat.completions.create(
+        async for chunk in await self.client.chat.completions.create(
             model=self.model,
             messages=[message.model_dump() for message in messages],
             stream=True,
@@ -60,14 +68,16 @@ class LLM:
 
         return "".join(result)
 
-    async def parse(
-        self, model: Type[T], messages: list[Message], **kwargs
-    ) -> T:
+    async def parse(self, model: Type[T], messages: list[Message], **kwargs) -> T:
         response = await self.client.beta.chat.completions.parse(
             model=self.model,
             messages=[message.model_dump() for message in messages],
             response_format=model,
             **kwargs,
         )
+
+        if self.verbose:
+            d = response.choices[0].message.parsed.model_dump()
+            rich.print(d)
 
         return response.choices[0].message.parsed
