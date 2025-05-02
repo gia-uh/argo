@@ -50,6 +50,11 @@ TODO
 - Add support for skill composition.
 - Add support for multi-agent collaboration and delegation.
 
+### 0.1.4
+
+- Verbose mode for LLM.
+- Several new examples.
+
 ### 0.1.3
 
 - Automatic skill selection and tool invocation.
