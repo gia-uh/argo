@@ -11,6 +11,7 @@ class Skill:
     def __init__(self, name: str, description: str):
         self._name = name
         self._description = description
+        self._before = []
 
     @property
     def name(self):
@@ -21,8 +22,25 @@ class Skill:
         return self._description
 
     @abc.abstractmethod
-    async def execute(self, agent: "Agent", messages: list[Message]) -> Message:
+    async def _execute(self, agent: "Agent", messages: list[Message]) -> Message:
         pass
+
+    async def execute(self, agent: "Agent", messages: list[Message]) -> Message:
+        messages = list(messages)
+
+        for skill in self._before:
+            m = await skill.execute(agent, messages)
+            messages.append(m)
+
+        return await self._execute(agent, messages)
+
+    def requires(self, target):
+        if isinstance(target, Skill):
+            self._before.append(target)
+        else:
+            self._before.append(_MethodSkill(target.__name__, target.__doc__, target))
+
+        return target
 
 
 class _MethodSkill(Skill):
@@ -30,7 +48,7 @@ class _MethodSkill(Skill):
         super().__init__(name, description)
         self._target = target
 
-    async def execute(self, agent: "Agent", messages: list[Message]) -> Message:
+    async def _execute(self, agent: "Agent", messages: list[Message]) -> Message:
         return await self._target(agent, messages)
 
 
@@ -187,7 +205,6 @@ class Agent:
 
         if skill_selector is None:
             from .utils import default_skill_selector
-
             skill_selector = default_skill_selector
 
         self._skill_selector = skill_selector
@@ -215,14 +232,14 @@ class Agent:
         skill: Skill = await self._skill_selector(self, self._skills, messages)
         return await skill.execute(self, messages)
 
-    async def reply(self, messages: list[Message]) -> Message:
+    async def reply(self, *messages: Message) -> Message:
         """Reply to the provided messages.
 
         This method will use the LLM to generate a response to the provided messages.
         It does not use any skills.
         Mostly useful inside skills to finish the conversation.
         """
-        response = await self.llm.chat(messages)
+        response = await self.llm.chat(list(messages))
         return Message.assistant(response)
 
     async def choose(self, options: list[T], messages: list[Message]) -> T:
@@ -280,12 +297,6 @@ class Agent:
         )
         return mapping[response.selection]
 
-    def add_skill(self, skill: Skill):
-        self._skills.append(skill)
-
-    def register_tool(self, tool: Tool):
-        self._tools.append(tool)
-
     def skill(self, target):
         if not inspect.iscoroutinefunction(target):
             raise ValueError("Skill must be a coroutine function.")
@@ -293,7 +304,7 @@ class Agent:
         name = target.__name__
         description = inspect.getdoc(target)
         skill = _MethodSkill(name, description, target)
-        self.add_skill(skill)
+        self._skills.append(skill)
         return skill
 
     def tool(self, target):
@@ -308,5 +319,5 @@ class Agent:
         name = target.__name__
         description = inspect.getdoc(target)
         tool = _MethodTool(name, description, target)
-        self.register_tool(tool)
+        self._tools.append(tool)
         return tool

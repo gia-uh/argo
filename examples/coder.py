@@ -1,8 +1,8 @@
 from argo import Agent, LLM, Message
 import dotenv
 import os
-import asyncio
 import rich
+from argo.cli import run_in_cli
 
 
 dotenv.load_dotenv()
@@ -12,14 +12,14 @@ async def callback(chunk: str):
     print(chunk, end="")
 
 
-coder = Agent(
+agent = Agent(
     name="Coder",
     description="A helpful assistant that can write and run Python code.",
     llm=LLM(model=os.getenv("MODEL"), callback=callback),
 )
 
 
-@coder.skill
+@agent.skill
 async def code(agent: Agent, messages: list[Message]) -> str:
     """Use Python to compute math operations.
 
@@ -28,11 +28,11 @@ async def code(agent: Agent, messages: list[Message]) -> str:
     result = await interpreter.invoke(agent, messages)
 
     return await agent.reply(
-        messages + [Message.system(f"Result={result}.\n\nReply to the user.")]
+        *messages, Message.system(f"Result={result}.\n\nReply to the user.")
     )
 
 
-@coder.tool
+@agent.tool
 async def interpreter(code: str) -> str:
     """Run Python code and returns a final value.
 
@@ -54,8 +54,4 @@ async def interpreter(code: str) -> str:
     return env.get('result')
 
 
-async def run():
-    await coder.perform([Message.user(input(">>> "))])
-
-
-asyncio.run(run())
+run_in_cli(agent)

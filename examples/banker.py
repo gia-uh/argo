@@ -4,6 +4,7 @@ import os
 import asyncio
 
 from argo.agent import Tool
+from argo.cli import run_in_cli
 
 
 dotenv.load_dotenv()
@@ -60,7 +61,7 @@ async def banker(agent: Agent, messages: list[Message]) -> Message:
     """
     tool: Tool = await agent.pick(messages)
     result = await tool.invoke(agent, messages)
-    return await agent.reply(messages + [Message.system(f"Result: {result}")])
+    return await agent.reply(*messages, Message.system(f"Result: {result}"))
 
 
 @agent.tool
@@ -89,18 +90,4 @@ async def withdraw(ammount: int) -> dict:
         return dict(error="Insufficient funds.", balance=account.balance)
 
 
-async def run():
-    history = []
-
-    while True:
-        try:
-            user_input = input(">>> ")
-            history.append(Message.user(user_input))
-            response = await agent.perform(history)
-            history.append(response)
-            print()
-        except (EOFError, KeyboardInterrupt):
-            break
-
-
-asyncio.run(run())
+run_in_cli(agent)

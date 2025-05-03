@@ -1,7 +1,7 @@
 from argo import Agent, LLM, Message
+from argo.cli import run_in_cli
 import dotenv
 import os
-import asyncio
 
 
 dotenv.load_dotenv()
@@ -22,21 +22,7 @@ agent = Agent(
 async def chat(agent:Agent, messages: list[Message]) -> Message:
     """Casual chat with the user.
     """
-    return await agent.reply(messages)
+    return await agent.reply(*messages)
 
 
-async def run():
-    history = []
-
-    while True:
-        try:
-            user_input = input(">>> ")
-            history.append(Message.user(user_input))
-            response = await agent.perform(history)
-            history.append(response)
-            print()
-        except (EOFError, KeyboardInterrupt):
-            break
-
-
-asyncio.run(run())
+run_in_cli(agent)
