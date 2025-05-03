@@ -55,6 +55,11 @@ TODO
 - Add support for skill composition.
 - Add support for multi-agent collaboration and delegation.
 
+### 0.1.5
+
+- Middleware for skills (`@skill.before` syntax)
+- Better handling of errors.
+
 ### 0.1.4
 
 - Verbose mode for LLM.
