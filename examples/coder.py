@@ -8,7 +8,7 @@ from argo.cli import loop
 dotenv.load_dotenv()
 
 
-async def callback(chunk: str):
+def callback(chunk: str):
     print(chunk, end="")
 
 

@@ -1,8 +1,13 @@
 import asyncio
+import sys
+
+from pathlib import Path
+import dotenv
 import rich
 import rich.prompt
 from .agent import Agent
-from .llm import Message
+from .llm import LLM, Message
+from .declarative import parse
 
 
 def loop(agent:Agent):
@@ -37,3 +42,30 @@ def loop(agent:Agent):
                 break
 
     asyncio.run(run())
+
+
+def run(path: Path):
+    dotenv.load_dotenv()
+    import os
+
+    API_KEY = os.getenv("API_KEY")
+    BASE_URL = os.getenv("BASE_URL")
+    MODEL = os.getenv("MODEL")
+
+    def callback(chunk: str):
+        print(chunk, end="")
+
+    llm = LLM(model=MODEL, api_key=API_KEY, base_url=BASE_URL, callback=callback)
+
+    config = parse(path)
+    rich.print(config)
+    rich.print()
+
+    agent = config.compile(llm)
+    loop(agent)
+
+
+if __name__ == "__main__":
+
+
+    run(Path(sys.argv[1]))

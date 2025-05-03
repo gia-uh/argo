@@ -1,3 +1,4 @@
+import inspect
 from typing import Callable, Type, TypeVar
 import rich
 import json
@@ -62,7 +63,10 @@ class LLM:
                 continue
 
             if self.callback:
-                await self.callback(content)
+                if inspect.iscoroutinefunction(self.callback):
+                    await self.callback(content)
+                else:
+                    self.callback(content)
 
             result.append(content)
 

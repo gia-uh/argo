@@ -30,7 +30,7 @@ class Account:
 account = Account(1000)
 
 
-async def callback(chunk: str):
+def callback(chunk: str):
     print(chunk, end="")
 
 

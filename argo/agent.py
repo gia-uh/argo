@@ -298,6 +298,13 @@ class Agent:
         return mapping[response.selection]
 
     def skill(self, target):
+        if isinstance(target, Skill):
+            self._skills.append(target)
+            return target
+
+        if not callable(target):
+            raise ValueError("Skill must be a callable.")
+
         if not inspect.iscoroutinefunction(target):
             raise ValueError("Skill must be a coroutine function.")
 
@@ -308,6 +315,10 @@ class Agent:
         return skill
 
     def tool(self, target):
+        if isinstance(target, Tool):
+            self._tools.append(target)
+            return target
+
         # BUG: Doesn't work for sync method
         if not inspect.iscoroutinefunction(target):
             @functools.wraps(target)
