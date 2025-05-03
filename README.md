@@ -100,10 +100,10 @@ skills:
       - reply: []
 ```
 
-You can run the above agent with:
+You can run the above configuration with the `argo` command.
 
 ```bash
-python -m argo.cli <path/to/config.yaml>
+argo <path/to/config.yaml>
 ```
 
 ## Documentation
@@ -124,6 +124,12 @@ Documentation is still under construction. However, you can check the examples f
 - Add tool definition via YAML and REST endpoints.
 - Add support for skill composition.
 - Add support for multi-agent collaboration and delegation.
+
+### 0.1.6
+
+- Basic API for declarative agents (YAML mode).
+- Example of basic YAML agent.
+- CLI entrypoint for loading YAML agents.
 
 ### 0.1.5
 

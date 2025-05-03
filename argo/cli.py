@@ -44,9 +44,11 @@ def loop(agent:Agent):
     asyncio.run(run())
 
 
-def run(path: Path):
+def main():
     dotenv.load_dotenv()
     import os
+
+    path = Path(sys.argv[1])
 
     API_KEY = os.getenv("API_KEY")
     BASE_URL = os.getenv("BASE_URL")
@@ -66,6 +68,4 @@ def run(path: Path):
 
 
 if __name__ == "__main__":
-
-
-    run(Path(sys.argv[1]))
+    main()
