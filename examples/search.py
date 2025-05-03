@@ -5,7 +5,7 @@ import os
 import googlesearch
 import markitdown
 
-from argo.cli import run_in_cli
+from argo.cli import run_sync
 
 
 dotenv.load_dotenv()
@@ -85,4 +85,4 @@ async def search_tool(query: str) -> str:
     return list(str(s) for s in googlesearch.search(query, num_results=5, unique=True))
 
 
-run_in_cli(agent)
+run_sync(agent)

@@ -3,7 +3,7 @@ from .agent import Agent
 from .llm import Message
 
 
-def run_in_cli(agent:Agent):
+def run_sync(agent:Agent):
     async def run():
         history = []
 

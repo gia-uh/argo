@@ -1,5 +1,5 @@
 from argo import Agent, LLM, Message
-from argo.cli import run_in_cli
+from argo.cli import run_sync
 import dotenv
 import os
 
@@ -25,4 +25,4 @@ async def chat(agent:Agent, messages: list[Message]) -> Message:
     return await agent.reply(*messages)
 
 
-run_in_cli(agent)
+run_sync(agent)
