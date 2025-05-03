@@ -5,4 +5,3 @@ skills:
     description: "Casual chat with the user."
     steps:
       - reply: []
-tools: []

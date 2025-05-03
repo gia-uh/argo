@@ -2,7 +2,7 @@ import abc
 from typing import Annotated, Any, Literal, Union
 import yaml
 
-from pydantic import BaseModel, Discriminator, Tag
+from pydantic import BaseModel, Discriminator, Field, Tag
 
 from argo.agent import Agent, Skill, Message
 from argo.llm import LLM
@@ -93,7 +93,7 @@ class AgentConfig(BaseModel):
     name: str
     description: str
 
-    tools: list[ToolConfig]
+    tools: list[ToolConfig] = Field(default_factory=list)
     skills: list[SkillConfig]
 
     def compile(self, llm: LLM) -> Agent:

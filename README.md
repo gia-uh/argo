@@ -37,8 +37,73 @@ The orchestration component manages communication, task allocation, and workflow
 
 ## Installation
 
+**ARGO** is a very lightweight framework, with no complicated dependencies. Just install it via `pip`, `uv` or any package manager you use.
+
 ```bash
 pip install argo
+```
+
+## Quick Start
+
+**ARGO** can be used primarily in two modes: code-first, and declarative.
+
+### Code-first mode
+
+The code-first mode involves using the `argo` Python package in your code, and is mostly useful if you need a deep integration with your own tools.
+
+Here is a quick hello world example that sets up a basic chat agent with no fancy tools or skills.
+We assume you have the relevant environment variables `API_KEY`, `BASE_URL` and `MODEL` exported.
+
+```python
+from argo import Agent, LLM, Message
+from argo.cli import loop
+import dotenv
+import os
+
+# load environment variables
+dotenv.load_dotenv()
+
+# set a basic callback to print LLM respondes to terminal
+def callback(chunk:str):
+    print(chunk, end="")
+
+# initialize the agent
+agent = Agent(
+    name="Agent",
+    description="A helpful assistant.",
+    llm=LLM(model=os.getenv("MODEL"), callback=callback),
+)
+
+# basic skill that just replies to user messages
+# notice skills *must* be async methods for now
+@agent.skill
+async def chat(agent:Agent, messages: list[Message]) -> Message:
+    """Casual chat with the user.
+    """
+    return await agent.reply(*messages)
+
+# this sets up the chat history and conversation loop
+loop(agent)
+```
+
+### Declarative mode
+
+The same behavior can be achieved with a simpler declarative interface that uses YAML files for defining skills and tools. Here is the equivalent YAML file for the above example.
+
+```yaml
+name: "Casual"
+description: "An agent that performs only casual chat."
+skills:
+  - name: "chat"
+    description: "Casual chat with the user."
+    steps:
+      - reply: []
+```
+
+You can run the above agent with:
+
+```bash
+python -m argo.cli <path/to/config.yaml>
 ```
 
 ## Documentation
