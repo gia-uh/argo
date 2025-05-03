@@ -133,7 +133,7 @@ Documentation is still under construction. However, you can check the examples f
 
 ### 0.1.5
 
-- Middleware for skills (`@skill.before` syntax)
+- Middleware for skills (`@skill.require` syntax)
 - Better handling of errors.
 
 ### 0.1.4
