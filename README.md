@@ -41,9 +41,14 @@ The orchestration component manages communication, task allocation, and workflow
 pip install argo
 ```
 
-## Quick Start Example
+## Documentation
 
-TODO
+Documentation is still under construction. However, you can check the examples for a quick start.
+
+- [Hello World](examples/hello_world.py): The barebones chat app with no extra skills.
+- [Coder](examples/coder.py): A simple agent that can aswer math questions with a code interpreter.
+- [Banker](examples/banker.py): A simple agent that can manage a (simulated) bank account.
+- [Search](examples/search.py): An agent that can answer factual questions by searching the web.
 
 ## Changelog
 

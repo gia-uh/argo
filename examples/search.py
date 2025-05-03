@@ -16,8 +16,8 @@ async def callback(chunk: str):
 
 
 agent = Agent(
-    name="Agent",
-    description="A helpful assistant.",
+    name="Search",
+    description="A helpful assistant that can search online for answering factual questions.",
     llm=LLM(model=os.getenv("MODEL"), callback=callback, verbose=True),
 )
 
@@ -26,7 +26,9 @@ agent = Agent(
 async def chat(agent: Agent, messages: list[Message]) -> Message:
     """Casual chat with the user.
 
-    Use this only for greetings and basic chat."""
+    Use this only for greetings, basic chat,
+    and questions regarding your own capabilities.
+    """
     return await agent.reply(*messages)
 
 

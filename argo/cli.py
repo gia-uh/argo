@@ -1,4 +1,6 @@
 import asyncio
+import rich
+import rich.prompt
 from .agent import Agent
 from .llm import Message
 
@@ -9,7 +11,7 @@ def run_sync(agent:Agent):
 
         while True:
             try:
-                user_input = input(">>> ")
+                user_input = rich.prompt.Prompt.ask(agent.name)
                 history.append(Message.user(user_input))
                 response = await agent.perform(history)
                 history.append(response)
