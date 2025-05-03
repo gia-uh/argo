@@ -2,7 +2,7 @@ from argo import Agent, LLM, Message
 import dotenv
 import os
 import rich
-from argo.cli import run_sync
+from argo.cli import loop
 
 
 dotenv.load_dotenv()
@@ -54,4 +54,4 @@ async def interpreter(code: str) -> str:
     return env.get('result')
 
 
-run_sync(agent)
+loop(agent)

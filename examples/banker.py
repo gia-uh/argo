@@ -4,7 +4,7 @@ import os
 import asyncio
 
 from argo.agent import Tool
-from argo.cli import run_sync
+from argo.cli import loop
 
 
 dotenv.load_dotenv()
@@ -90,4 +90,4 @@ async def withdraw(ammount: int) -> dict:
         return dict(error="Insufficient funds.", balance=account.balance)
 
 
-run_sync(agent)
+loop(agent)
