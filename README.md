@@ -14,8 +14,6 @@ Similarly, **ARGO** embodies a system where multiple specialized agents collabor
 
 **ARGO** is a code-first framework, meaning you create agentic workflows by writing Python code. This approach offers flexibility and control over the agentic workflows you build. However, **ARGO** also provides a very high-level, declarative interface that can be used to define agentic workflows purely with YAML files. Furthermore, **ARGO** can be run via a CLI to completely automate the execution of agentic workflows.
 
-
-
 ## Installation
 
 **ARGO** is a very lightweight framework, with no complicated dependencies. Just install it via `pip`, `uv` or any package manager you use.
@@ -132,6 +130,18 @@ Think of a skill as a blueprint on how to solve a given problem, starting from a
 
 Tools encapsulate external functionality such as calling APIs, running code or commands, or performing other operations that are not directly available to the LLM. Tools are used by skills to extend the capabilities of the agent.
 
+### Training Mode (under development)
+
+A unique feature of **ARGO** is the capability to "train" agents to become better at solving specific problems. Traditionally, the cheap way to "train" LLM agents is to provide them with a set of examples of how they should behave. But crafting specific examples for each problem is time-consuming and error-prone.
+
+**ARGO** aims to solve this by interactively building a set of relevant, diverse, and high-quality examples for each pathway in the agentic workflow implemented. This is done by leveraging the LLM's own capabilities to generate and refine examples, plus user guidance to evaluate how well is the agent behaving.
+
+When in training mode, an agent will execute as usual, but it will also collect data about the execution of each skill and tool. This data is then used to generate examples that can be used to improve the agent's performance. Each training session consists of a set of interactions with the user, where the agent will ask for feedback on its behavior at different points.
+
+When the agent deviates from the intended behavior, the user can either discard that experience, or provide natural language feedback to indicate the agent how to modify its behavior. With the right feedback, the agent can re-do the execution of the skill or tool, and try again. This process can be repeated until the agent behaves as expected, at which point the collected feedback is stored.
+
+The result of a training session is a collection of structured examples that can be later provided to a new instance of the same agent to use during inference.
+
 ## Changelog
 
 ### Roadmap
@@ -141,6 +151,7 @@ Tools encapsulate external functionality such as calling APIs, running code or c
 - Add tool definition via YAML and REST endpoints.
 - Add support for skill composition.
 - Add support for multi-agent collaboration and delegation.
+- Add training mode.
 
 ### 0.1.8
 
