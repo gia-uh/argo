@@ -138,7 +138,7 @@ A unique feature of **ARGO** is the capability to "train" agents to become bette
 
 When in training mode, an agent will execute as usual, but it will also collect data about the execution of each skill and tool. This data is then used to generate examples that can be used to improve the agent's performance. Each training session consists of a set of interactions with the user, where the agent will ask for feedback on its behavior at different points.
 
-When the agent deviates from the intended behavior, the user can either discard that experience, or provide natural language feedback to indicate the agent how to modify its behavior. With the right feedback, the agent can re-do the execution of the skill or tool, and try again. This process can be repeated until the agent behaves as expected, at which point the collected feedback is stored.
+When the agent deviates from the intended behavior, the user can either discard that experience, or provide natural language feedback to indicate the agent how to modify its behavior. With the right feedback, the agent can re-do the execution of the skill or tool, and try again. This process can be repeated until the agent behaves as expected, at which point the sucessfull interaction is stored.
 
 The result of a training session is a collection of structured examples that can be later provided to a new instance of the same agent to use during inference.
 
