@@ -1,0 +1,11 @@
+name: "Bruno"
+description: "An agent that refuses to talk about Bruno."
+skills:
+  - name: "chat"
+    description: "Whatever the user asks."
+    steps:
+      - decide: "Is the user request related to Bruno?"
+        when_true:
+          - reply: "Politely refuse to answer."
+        when_false:
+          - reply:

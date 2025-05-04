@@ -4,4 +4,4 @@ skills:
   - name: "chat"
     description: "Casual chat with the user."
     steps:
-      - reply: []
+      - reply:

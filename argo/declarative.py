@@ -2,7 +2,7 @@ import abc
 from typing import Annotated, Any, Literal, Union
 import yaml
 
-from pydantic import BaseModel, Discriminator, Field, Tag
+from pydantic import BaseModel, Discriminator, Field, RootModel, Tag
 
 from argo.agent import Agent, Skill, Message
 from argo.llm import LLM
@@ -20,22 +20,43 @@ class SkillStep(BaseModel):
 
 
 class DecideStep(SkillStep):
-    decide: str
+    decide: str | None
+    when_true: "StepList"
+    when_false: "StepList"
+
+    def compile(self):
+        true_branch = self.when_true.compile()
+        false_branch = self.when_false.compile()
+
+        async def decide_step(agent: Agent, messages: list[Message]) -> Message:
+            new_messages = list(messages)
+
+            if self.decide:
+                new_messages.append(Message.system(self.decide))
+
+            decision = await agent.decide(new_messages)
+
+            if decision:
+                return await true_branch(agent, messages)
+            else:
+                return await false_branch(agent, messages)
+
+        return decide_step
 
 
 class ChooseStep(SkillStep):
-    choose: list[str]
+    choose: dict[str, "StepList"]
 
 
 class ReplyStep(SkillStep):
-    reply: list[str]
+    reply: str | None
 
     def compile(self):
         async def reply_step(agent: Agent, messages: list[Message]) -> Message:
             messages = list(messages)
 
-            for m in self.reply:
-                messages.append(Message.system(m))
+            if self.reply:
+                messages.append(Message.system(self.reply))
 
             return await agent.reply(*messages)
 
@@ -56,10 +77,8 @@ def get_skill_step_discriminator_value(v: Any) -> str:
     raise ValueError(f"Invalid SkillStep: {v}")
 
 
-class SkillConfig(BaseModel):
-    name: str
-    description: str
-    steps: list[
+class StepList(RootModel[
+    list[
         Annotated[
             Union[
                 Annotated[DecideStep, Tag("DecideStep")],
@@ -69,6 +88,28 @@ class SkillConfig(BaseModel):
             Discriminator(get_skill_step_discriminator_value),
         ]
     ]
+]):
+    pass
+
+    def compile(self):
+        steps = [s.compile() for s in self.root]
+
+        async def step_list(agent: Agent, messages: list[Message]) -> Message:
+            m: Message = None
+
+            for step in steps:
+                m = await step(agent, messages)
+                messages.append(m)
+
+            return m
+
+        return step_list
+
+
+class SkillConfig(BaseModel):
+    name: str
+    description: str
+    steps: StepList
 
     def compile(self) -> Skill:
         return DeclarativeSkill(self)
@@ -77,16 +118,10 @@ class SkillConfig(BaseModel):
 class DeclarativeSkill(Skill):
     def __init__(self, config: SkillConfig):
         super().__init__(config.name, config.description)
-        self.steps = [s.compile() for s in config.steps]
+        self.steps = config.steps.compile()
 
     async def _execute(self, agent, messages):
-        m: Message = None
-
-        for step in self.steps:
-            m = await step(agent, messages)
-            messages.append(m)
-
-        return m
+        return await self.steps(agent, messages)
 
 
 class AgentConfig(BaseModel):
