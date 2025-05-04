@@ -135,7 +135,7 @@ Given the previous messages, you have
 to select one and only one of the following items
 to reply:
 
-{items}
+{options}
 
 First provide a reasoning for your response,
 and then the right selection.

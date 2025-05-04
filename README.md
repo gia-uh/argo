@@ -121,6 +121,7 @@ The following are YAML-first examples:
 
 - [Hello World](examples/hello_world.yaml): The barebones chat app with no extra skills.
 - [Bruno](examples/bruno.yaml): An agent that refuses to talk about Bruno.
+- [Psychologist](examples/psychologist.yaml): A simplisitic agent that can counsel the user.
 
 ## Changelog
 
@@ -131,6 +132,11 @@ The following are YAML-first examples:
 - Add tool definition via YAML and REST endpoints.
 - Add support for skill composition.
 - Add support for multi-agent collaboration and delegation.
+
+### 0.1.8
+
+- Support for choice prompts in YAML mode.
+- Example for `choice` instructions.
 
 ### 0.1.7
 

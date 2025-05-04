@@ -45,7 +45,23 @@ class DecideStep(SkillStep):
 
 
 class ChooseStep(SkillStep):
-    choose: dict[str, "StepList"]
+    choose: str | None = None
+    choices: dict[str, "StepList"]
+
+    def compile(self):
+        compiled_choices = {k: v.compile() for k, v in self.choices.items()}
+
+        async def choose_step(agent: Agent, messages: list[Message]) -> Message:
+            new_messages = list(messages)
+
+            if self.choose:
+                new_messages.append(Message.system(self.choose))
+
+            choice = await agent.choose(list(compiled_choices.keys()), messages)
+
+            return await compiled_choices[choice](agent, messages)
+
+        return choose_step
 
 
 class ReplyStep(SkillStep):
