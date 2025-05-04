@@ -110,10 +110,17 @@ argo <path/to/config.yaml>
 
 Documentation is still under construction. However, you can check the examples for a quick start.
 
+The following are code-first examples:
+
 - [Hello World](examples/hello_world.py): The barebones chat app with no extra skills.
 - [Coder](examples/coder.py): A simple agent that can aswer math questions with a code interpreter.
 - [Banker](examples/banker.py): A simple agent that can manage a (simulated) bank account.
 - [Search](examples/search.py): An agent that can answer factual questions by searching the web.
+
+The following are YAML-first examples:
+
+- [Hello World](examples/hello_world.yaml): The barebones chat app with no extra skills.
+- [Bruno](examples/bruno.yaml): An agent that refuses to talk about Bruno.
 
 ## Changelog
 
@@ -124,6 +131,11 @@ Documentation is still under construction. However, you can check the examples f
 - Add tool definition via YAML and REST endpoints.
 - Add support for skill composition.
 - Add support for multi-agent collaboration and delegation.
+
+### 0.1.7
+
+- Support for decision prompts in YAML mode.
+- Example for `decide` instruction.
 
 ### 0.1.6
 
