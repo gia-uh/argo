@@ -14,31 +14,7 @@ Similarly, **ARGO** embodies a system where multiple specialized agents collabor
 
 **ARGO** is a code-first framework, meaning you create agentic workflows by writing Python code. This approach offers flexibility and control over the agentic workflows you build. However, **ARGO** also provides a very high-level, declarative interface that can be used to define agentic workflows purely with YAML files. Furthermore, **ARGO** can be run via a CLI to completely automate the execution of agentic workflows.
 
-## Key Concepts
 
-The following is a very high-level explanation of the architecture and key ideas in **ARGO**.
-
-### Agents
-
-The main concept in **ARGO** is the Agent. An agent encapsulates a set of related functionalities to solve a given domain problem. Ultimately, and agent wraps a language model (LLM) and provides a simple interface for interacting with it via customizable and dynamic prompts.
-
-Agents can use specialized skills, including delegating work on other specialized agents. This allows you to construct hierarchies and workflows to solve complex problems.
-
-### Skills
-
-Every agent has a set of one or more skills. A skill encapsulates domain knowledge on how to solve a concrete problem. This can require one or more prompts and tools, and it can be as flexible or as rigid as needed.
-
-Think of a skill as a blueprint on how to solve a given problem, starting from a given prompt, and potentially using one or more tools. Skills can be highly structured, detailing at each each step how the agent should respond to specific inputs. However, skills can also leverage the flexibility of LLMs to be as flexible as necessary.
-
-### Tools
-
-Tools encapsulate external functionality such as calling APIs, running code or commands, or performing other operations that are not directly available to the LLM. Tools are used by skills to extend the capabilities of the agent.
-
-## Design principles
-
-**ARGO** is designed around the key principles of modularity, flexibility, and simplicity. It is a non-opinionated framework that provides only the barebone functionality to build agentic workflows. As such, there are no concrete implementations of any specific tools or skills, or agentic paradigms like ReAct, Chain of Thought, etc.
-
-However, **ARGO** gives you the tools to easily instantiate these paradigms and anything else you can dream of with minimal effort. Furthermore, you will find in the documentation plenty of examples using some of the most common agentic paradigms in the literature, including CoT, ReAct, actor-critic, self-consistency, ensembles, and many more.
 
 ## Installation
 
@@ -111,6 +87,8 @@ You can run the above configuration with the `argo` command.
 argo <path/to/config.yaml>
 ```
 
+Check the [examples](examples) folder for more detailed examples.
+
 ## Documentation
 
 Documentation is still under construction. However, you can check the examples for a quick start.
@@ -127,6 +105,32 @@ The following are YAML-first examples:
 - [Hello World](examples/hello_world.yaml): The barebones chat app with no extra skills.
 - [Bruno](examples/bruno.yaml): An agent that refuses to talk about Bruno.
 - [Psychologist](examples/psychologist.yaml): A simplisitic agent that can counsel the user.
+
+### Design principles
+
+**ARGO** is designed around the key principles of modularity, flexibility, and simplicity. It is a non-opinionated framework that provides only the barebone functionality to build agentic workflows. As such, there are no concrete implementations of any specific tools or skills, or agentic paradigms like ReAct, Chain of Thought, etc.
+
+However, **ARGO** gives you the tools to easily instantiate these paradigms and anything else you can dream of with minimal effort. Furthermore, you will find in the documentation plenty of examples using some of the most common agentic paradigms in the literature, including CoT, ReAct, actor-critic, self-consistency, ensembles, and many more.
+
+### Key Concepts
+
+The following is a very high-level explanation of the architecture and key ideas in **ARGO**.
+
+#### Agents
+
+The main concept in **ARGO** is the Agent. An agent encapsulates a set of related functionalities to solve a given domain problem. Ultimately, and agent wraps a language model (LLM) and provides a simple interface for interacting with it via customizable and dynamic prompts.
+
+Agents can use specialized skills, including delegating work on other specialized agents. This allows you to construct hierarchies and workflows to solve complex problems.
+
+#### Skills
+
+Every agent has a set of one or more skills. A skill encapsulates domain knowledge on how to solve a concrete problem. This can require one or more prompts and tools, and it can be as flexible or as rigid as needed.
+
+Think of a skill as a blueprint on how to solve a given problem, starting from a given prompt, and potentially using one or more tools. Skills can be highly structured, detailing at each each step how the agent should respond to specific inputs. However, skills can also leverage the flexibility of LLMs to be as flexible as necessary.
+
+#### Tools
+
+Tools encapsulate external functionality such as calling APIs, running code or commands, or performing other operations that are not directly available to the LLM. Tools are used by skills to extend the capabilities of the agent.
 
 ## Changelog
 
@@ -174,7 +178,9 @@ The following are YAML-first examples:
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome! Please see [CONTRIBUTING.md](Contributing) for guidelines.
+
+Everyone is expected to follow the [CODE_OF_CONDUCT.md](Code of Conduct) when contributing to this project.
 
 ## License
 
