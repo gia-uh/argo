@@ -2,9 +2,9 @@
 
 ![PyPI - Version](https://img.shields.io/pypi/v/argo-ai) ![GitHub License](https://img.shields.io/github/license/apiad/argo)
 
-
-
 **ARGO** - *Agent-based Reasoning, Governance, and Orchestration* - is a Python framework for building powerful, collaborative multi-agent systems powered by large language models (LLMs) and other AI components. Inspired by the legendary ship Argo that carried the Argonauts on their epic quest, ARGO unites diverse intelligent agents to reason, govern, and orchestrate complex workflows together.
+
+> NOTE: **ARGO** is a work in progress. The current state is a proof of concept and is not yet ready for production use.
 
 ## Overview
 
@@ -16,24 +16,29 @@ Similarly, **ARGO** embodies a system where multiple specialized agents collabor
 
 ## Key Concepts
 
-### Agent-based Reasoning
-Each agent in ARGO is an autonomous entity capable of independent reasoning, perception, and action. Agents leverage large language models and AI tools to interpret data, make decisions, and contribute specialized expertise to the collective.
+The following is a very high-level explanation of the architecture and key ideas in **ARGO**.
 
-### Governance
-ARGO incorporates a governance layer that structures agent interactions, defines roles and responsibilities, and enforces protocols to ensure alignment, compliance, and accountability within the multi-agent system.
+### Agents
 
-### Orchestration
-The orchestration component manages communication, task allocation, and workflow execution among agents. It supports flexible collaboration patterns, from linear pipelines to dynamic, adaptive workflows.
+The main concept in **ARGO** is the Agent. An agent encapsulates a set of related functionalities to solve a given domain problem. Ultimately, and agent wraps a language model (LLM) and provides a simple interface for interacting with it via customizable and dynamic prompts.
 
-## Features
+Agents can use specialized skills, including delegating work on other specialized agents. This allows you to construct hierarchies and workflows to solve complex problems.
 
-> NOTE: ARGO is a work in progress. The current state is a proof of concept and is not yet ready for production use.
+### Skills
 
-- **Multi-agent collaboration:** Build teams of LLM-powered agents working in concert.
-- **Structured governance:** Define organizational models and enforce collaboration protocols.
-- **Flexible orchestration:** Coordinate complex workflows with customizable communication and task delegation.
-- **Extensible architecture:** Easily add new agent types, tools, and interaction patterns.
-- **Pythonic API:** Intuitive interfaces designed for rapid prototyping and deployment.
+Every agent has a set of one or more skills. A skill encapsulates domain knowledge on how to solve a concrete problem. This can require one or more prompts and tools, and it can be as flexible or as rigid as needed.
+
+Think of a skill as a blueprint on how to solve a given problem, starting from a given prompt, and potentially using one or more tools. Skills can be highly structured, detailing at each each step how the agent should respond to specific inputs. However, skills can also leverage the flexibility of LLMs to be as flexible as necessary.
+
+### Tools
+
+Tools encapsulate external functionality such as calling APIs, running code or commands, or performing other operations that are not directly available to the LLM. Tools are used by skills to extend the capabilities of the agent.
+
+## Design principles
+
+**ARGO** is designed around the key principles of modularity, flexibility, and simplicity. It is a non-opinionated framework that provides only the barebone functionality to build agentic workflows. As such, there are no concrete implementations of any specific tools or skills, or agentic paradigms like ReAct, Chain of Thought, etc.
+
+However, **ARGO** gives you the tools to easily instantiate these paradigms and anything else you can dream of with minimal effort. Furthermore, you will find in the documentation plenty of examples using some of the most common agentic paradigms in the literature, including CoT, ReAct, actor-critic, self-consistency, ensembles, and many more.
 
 ## Installation
 
