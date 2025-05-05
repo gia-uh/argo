@@ -34,7 +34,7 @@ Here is a quick hello world example that sets up a basic chat agent with no fanc
 We assume you have the relevant environment variables `API_KEY`, `BASE_URL` and `MODEL` exported.
 
 ```python
-from argo import Agent, LLM, Message
+from argo import Agent, LLM, Message, Context
 from argo.cli import loop
 import dotenv
 import os
@@ -56,10 +56,10 @@ agent = Agent(
 # basic skill that just replies to user messages
 # notice skills *must* be async methods for now
 @agent.skill
-async def chat(agent:Agent, messages: list[Message]) -> Message:
+async def chat(ctx: Context) -> Message:
     """Casual chat with the user.
     """
-    return await agent.reply(*messages)
+    return await ctx.reply()
 
 # this sets up the chat history and conversation loop
 loop(agent)
@@ -76,7 +76,7 @@ skills:
   - name: "chat"
     description: "Casual chat with the user."
     steps:
-      - reply: []
+      - reply:
 ```
 
 You can run the above configuration with the `argo` command.
@@ -152,6 +152,11 @@ The result of a training session is a collection of structured examples that can
 - Add support for skill composition.
 - Add support for multi-agent collaboration and delegation.
 - Add training mode.
+
+### 0.2.0
+
+- Refactor the skill interface to use `Context`.
+- Fix all examples.
 
 ### 0.1.8
 

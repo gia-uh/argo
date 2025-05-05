@@ -1,11 +1,14 @@
 import abc
-from typing import Annotated, Any, Literal, Union
+from typing import Annotated, Any, Union
 import yaml
 
 from pydantic import BaseModel, Discriminator, Field, RootModel, Tag
 
-from argo.agent import Agent, Skill, Message
-from argo.llm import LLM
+from .agent import Agent
+from .skills import Skill
+from .tools import Tool
+from .llm import LLM, Message
+from .context import Context
 
 
 class ToolConfig(BaseModel):
@@ -28,18 +31,18 @@ class DecideStep(SkillStep):
         true_branch = self.when_true.compile()
         false_branch = self.when_false.compile()
 
-        async def decide_step(agent: Agent, messages: list[Message]) -> Message:
-            new_messages = list(messages)
+        async def decide_step(ctx: Context) -> Message:
+            instructions = []
 
             if self.decide:
-                new_messages.append(Message.system(self.decide))
+                instructions.append(Message.system(self.decide))
 
-            decision = await agent.decide(new_messages)
+            decision = await ctx.decide(*instructions)
 
             if decision:
-                return await true_branch(agent, messages)
+                return await true_branch(ctx)
             else:
-                return await false_branch(agent, messages)
+                return await false_branch(ctx)
 
         return decide_step
 
@@ -51,15 +54,15 @@ class ChooseStep(SkillStep):
     def compile(self):
         compiled_choices = {k: v.compile() for k, v in self.choices.items()}
 
-        async def choose_step(agent: Agent, messages: list[Message]) -> Message:
-            new_messages = list(messages)
+        async def choose_step(ctx: Context) -> Message:
+            instructions = []
 
             if self.choose:
-                new_messages.append(Message.system(self.choose))
+                instructions.append(Message.system(self.choose))
 
-            choice = await agent.choose(list(compiled_choices.keys()), messages)
+            choice = await ctx.choose(list(compiled_choices.keys()), *instructions)
 
-            return await compiled_choices[choice](agent, messages)
+            return await compiled_choices[choice](ctx)
 
         return choose_step
 
@@ -68,13 +71,13 @@ class ReplyStep(SkillStep):
     reply: str | None
 
     def compile(self):
-        async def reply_step(agent: Agent, messages: list[Message]) -> Message:
-            messages = list(messages)
+        async def reply_step(ctx: Context) -> Message:
+            instructions = []
 
             if self.reply:
-                messages.append(Message.system(self.reply))
+                instructions.append(Message.system(self.reply))
 
-            return await agent.reply(*messages)
+            return await ctx.reply(*instructions)
 
         return reply_step
 
@@ -110,11 +113,12 @@ class StepList(RootModel[
     def compile(self):
         steps = [s.compile() for s in self.root]
 
-        async def step_list(agent: Agent, messages: list[Message]) -> Message:
+        async def step_list(ctx: Context) -> Message:
             m: Message = None
+            messages = ctx.messages
 
             for step in steps:
-                m = await step(agent, messages)
+                m = await step(ctx)
                 messages.append(m)
 
             return m
@@ -136,8 +140,8 @@ class DeclarativeSkill(Skill):
         super().__init__(config.name, config.description)
         self.steps = config.steps.compile()
 
-    async def _execute(self, agent, messages):
-        return await self.steps(agent, messages)
+    async def _execute(self, ctx):
+        return await self.steps(ctx)
 
 
 class AgentConfig(BaseModel):

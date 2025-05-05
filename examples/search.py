@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from argo import Agent, LLM, Message
+from argo import Agent, LLM, Message, Context
 import dotenv
 import os
 import googlesearch
@@ -23,23 +23,23 @@ agent = Agent(
 
 
 @agent.skill
-async def chat(agent: Agent, messages: list[Message]) -> Message:
+async def chat(ctx: Context) -> Message:
     """Casual chat with the user.
 
     Use this only for greetings, basic chat,
     and questions regarding your own capabilities.
     """
-    return await agent.reply(*messages)
+    return await ctx.reply()
 
 
 @agent.skill
-async def question_answering(agent: Agent, messages: list[Message]) -> Message:
+async def question_answering(ctx: Context) -> Message:
     """Answer questions about the world.
 
     Use this skill when the user asks any questions
     that might require external knowledge.
     """
-    return await agent.reply(*messages, Message.system("Reply concisely to the user."))
+    return await ctx.reply("Reply concisely to the user.")
 
 
 class Summary(BaseModel):
@@ -61,8 +61,8 @@ async def summarize(agent: Agent, url: str, content: str) -> Message:
 
 
 @question_answering.requires
-async def search(agent: Agent, messages: list[Message]) -> Message:
-    results = await search_tool.invoke(agent, messages)
+async def search(ctx: Context) -> Message:
+    results = await ctx.invoke(search_engine)
     md = markitdown.MarkItDown()
     summaries = []
 
@@ -82,7 +82,7 @@ async def search(agent: Agent, messages: list[Message]) -> Message:
 
 
 @agent.tool
-async def search_tool(query: str) -> str:
+async def search_engine(query: str) -> str:
     """Search the web for information."""
     return list(str(s) for s in googlesearch.search(query, num_results=5, unique=True))
 

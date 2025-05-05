@@ -1,4 +1,4 @@
-from argo import Agent, LLM, Message
+from argo import Agent, LLM, Message, Context
 import dotenv
 import os
 import rich
@@ -20,16 +20,13 @@ agent = Agent(
 
 
 @agent.skill
-async def code(agent: Agent, messages: list[Message]) -> str:
+async def code(ctx: Context) -> str:
     """Use Python to compute math operations.
 
     Use this skill when you need to compute some math operations.
     """
-    result = await interpreter.invoke(agent, messages)
-
-    return await agent.reply(
-        *messages, Message.system(f"Result={result}.\n\nReply to the user.")
-    )
+    result = await ctx.invoke(interpreter)
+    return await ctx.reply(f"Result={result}.\n\nReply to the user.")
 
 
 @agent.tool
@@ -51,7 +48,7 @@ async def interpreter(code: str) -> str:
 
     env = {}
     exec(code, env, env)
-    return env.get('result')
+    return env.get("result")
 
 
 loop(agent)

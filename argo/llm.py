@@ -48,7 +48,7 @@ class LLM:
         self.client = openai.AsyncOpenAI(base_url=base_url, api_key=api_key)
         self.callback = callback
 
-    async def chat(self, messages: list[Message], **kwargs) -> str:
+    async def chat(self, messages: list[Message], **kwargs) -> Message:
         result = []
 
         async for chunk in await self.client.chat.completions.create(
@@ -70,7 +70,7 @@ class LLM:
 
             result.append(content)
 
-        return "".join(result)
+        return Message.assistant("".join(result))
 
     async def parse(self, model: Type[T], messages: list[Message], **kwargs) -> T:
         response = await self.client.beta.chat.completions.parse(

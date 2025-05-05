@@ -1,4 +1,4 @@
-from argo import Agent, LLM, Message
+from argo import Agent, LLM, Message, Context
 from argo.cli import loop
 import dotenv
 import os
@@ -19,10 +19,10 @@ agent = Agent(
 
 
 @agent.skill
-async def chat(agent:Agent, messages: list[Message]) -> Message:
+async def chat(ctx: Context) -> Message:
     """Casual chat with the user.
     """
-    return await agent.reply(*messages)
+    return await ctx.reply()
 
 
 loop(agent)

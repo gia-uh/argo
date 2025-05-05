@@ -1,9 +1,7 @@
-from argo import Agent, LLM, Message
+from argo import Agent, LLM, Message, Context
 import dotenv
 import os
-import asyncio
 
-from argo.agent import Tool
 from argo.cli import loop
 
 
@@ -43,25 +41,25 @@ agent = Agent(
 
 # Add a basic chat skill
 @agent.skill
-async def casual_chat(agent: Agent, messages: list[Message]) -> Message:
+async def casual_chat(ctx: Context) -> Message:
     """Casual chat with the user.
 
     Use this skill when the user asks a general question or engages
     in casual chat.
     """
-    return await agent.reply(messages)
+    return await ctx.reply()
 
 
 @agent.skill
-async def banker(agent: Agent, messages: list[Message]) -> Message:
+async def banker(ctx: Context) -> Message:
     """Interact with the bank account.
 
     Use this skill when the user asks for information about the bank account,
     such as balance, or asks to deposit or withdraw.
     """
-    tool: Tool = await agent.pick(messages)
-    result = await tool.invoke(agent, messages)
-    return await agent.reply(*messages, Message.system(f"Result: {result}"))
+    tool = await ctx.equip()
+    result = await ctx.invoke(tool)
+    return await ctx.reply(f"Result: {result}")
 
 
 @agent.tool
