@@ -189,9 +189,9 @@ The result of a training session is a collection of structured examples that can
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](Contributing) for guidelines.
+Contributions are welcome! Please read the [Contribution Guidelines](CONTRIBUTING.md) for specific details.
 
-Everyone is expected to follow the [CODE_OF_CONDUCT.md](Code of Conduct) when contributing to this project.
+Everyone is expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md) when contributing to this project.
 
 ## License
 
