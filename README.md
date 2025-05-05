@@ -130,6 +130,10 @@ Think of a skill as a blueprint on how to solve a given problem, starting from a
 
 Tools encapsulate external functionality such as calling APIs, running code or commands, or performing other operations that are not directly available to the LLM. Tools are used by skills to extend the capabilities of the agent.
 
+### Context
+
+A very important concept in **ARGO** is the conversation context. This object encapsulates the list of messages available in the current iteration of the conversation, and provides all the methods to interact with the language model intelligently. Furthermore, the context keeps track of where we are in the conversation flow.
+
 ### Training Mode (under development)
 
 A unique feature of **ARGO** is the capability to "train" agents to become better at solving specific problems. Traditionally, the cheap way to "train" LLM agents is to provide them with a set of examples of how they should behave. But crafting specific examples for each problem is time-consuming and error-prone.
