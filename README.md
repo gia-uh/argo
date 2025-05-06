@@ -157,6 +157,11 @@ The result of a training session is a collection of structured examples that can
 
 ## Changelog
 
+### 0.2.1
+
+- Add support for ReAct-style reasoning.
+- Refactor the search example to showcase ReAct-style reasoning.
+
 ### 0.2.0
 
 - Refactor the skill interface to use `Context`.
