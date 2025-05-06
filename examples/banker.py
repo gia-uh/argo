@@ -59,7 +59,7 @@ async def banker(ctx: Context) -> Message:
     """
     tool = await ctx.equip()
     result = await ctx.invoke(tool)
-    return await ctx.reply(f"Result: {result}")
+    return await ctx.reply(Message.tool(result))
 
 
 @agent.tool

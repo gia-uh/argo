@@ -7,7 +7,9 @@ from pydantic import BaseModel
 import os
 
 
+
 class Message(BaseModel):
+
     role: str
     content: str
 
@@ -23,8 +25,13 @@ class Message(BaseModel):
     def assistant(cls, content: str) -> "Message":
         return cls(role="assistant", content=content)
 
+    @classmethod
+    def tool(cls, content: BaseModel) -> "Message":
+        return cls(role="tool", content=content.model_dump_json())
+
 
 T = TypeVar("T", bound=BaseModel)
+
 LLMCallback = Callable[[str], None]
 
 

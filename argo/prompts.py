@@ -56,15 +56,21 @@ is to generate parameters to invoke the following tool.
 
 Name: {name}.
 
-Parameters:
-{parameters}
-
 Description:
 {description}
 
+Defaults:
+{defaults}
+
+Missing parameters:
+{parameters}
+
 Return the reasoning and parameters as a JSON object
 with the following format:
+
 {format}
+
+Provide only the values for the parameters without defaults.
 """
 
 

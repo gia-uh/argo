@@ -146,9 +146,7 @@ When the agent deviates from the intended behavior, the user can either discard 
 
 The result of a training session is a collection of structured examples that can be later provided to a new instance of the same agent to use during inference.
 
-## Changelog
-
-### Roadmap
+## Roadmap
 
 - Improve documentation and examples.
 - Add skill definition via YAML.
@@ -156,6 +154,8 @@ The result of a training session is a collection of structured examples that can
 - Add support for skill composition.
 - Add support for multi-agent collaboration and delegation.
 - Add training mode.
+
+## Changelog
 
 ### 0.2.0
 

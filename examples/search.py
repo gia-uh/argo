@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+import rich
 from argo import Agent, LLM, Message, Context
 import dotenv
 import os
@@ -32,6 +33,12 @@ async def chat(ctx: Context) -> Message:
     return await ctx.reply()
 
 
+class TaskBreakdown(BaseModel):
+    reasoning: str
+    remaining: str
+    next_step: str
+
+
 @agent.skill
 async def question_answering(ctx: Context) -> Message:
     """Answer questions about the world.
@@ -39,52 +46,53 @@ async def question_answering(ctx: Context) -> Message:
     Use this skill when the user asks any questions
     that might require external knowledge.
     """
-    return await ctx.reply("Reply concisely to the user.")
 
+    for i in range(5):
+        task = await ctx.parse(
+            "Break down the user task into smaller steps."
+            "Provide the reasoning, then specify remaining part of the user task, "
+            "and then the next immediate step.",
+            model=TaskBreakdown
+        )
 
-class Summary(BaseModel):
-    url: str
-    title: str
-    summary: str
+        ctx.add(
+            "Given the user query and current results, here is a"
+            "breakdown of the task, including the remaining part of the task and the next step.",
+            Message.tool(task)
+        )
 
+        results = await ctx.invoke(
+            search,
+            "Provide the simplest query that fullfils the next immediate step",
+        )
 
-async def summarize(agent: Agent, url: str, content: str) -> Message:
-    return await agent.llm.parse(
-        Summary,
-        [
-            Message.system(
-                f"Summarize the following webpage.\n\nURL:{url}.\n\nProvide the summary in a JSON with format: {Summary.model_json_schema()}"
-            ),
-            Message.user(content),
-        ]
+        ctx.add(Message.tool(results))
+
+        if await ctx.decide("Is the information sufficient to answer the user?"):
+            return await ctx.reply("Reply concisely to the user.")
+
+    return await ctx.reply(
+        "Reply with the best available information in the context."
     )
 
 
-@question_answering.requires
-async def search(ctx: Context) -> Message:
-    results = await ctx.invoke(search_engine)
-    md = markitdown.MarkItDown()
-    summaries = []
+@agent.tool
+async def search(query: str) -> str:
+    """Search the web for information."""
+    candidates = googlesearch.search(query, num_results=5, unique=True)
 
-    for result in results:
+    md = markitdown.MarkItDown()
+
+    for result in candidates:
         if not result.startswith("http"):
             continue
 
         try:
-            text = md.convert_url(result).markdown
+            return md.convert_url(result).markdown
         except:
             continue
 
-        summary = await summarize(agent, result, text)
-        summaries.append(str(summary))
-
-    return Message.assistant("\n\n".join(summaries))
-
-
-@agent.tool
-async def search_engine(query: str) -> str:
-    """Search the web for information."""
-    return list(str(s) for s in googlesearch.search(query, num_results=5, unique=True))
+    return f"<ERROR: NOT FOUND '{query}'>"
 
 
 loop(agent)

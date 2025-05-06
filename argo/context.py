@@ -8,12 +8,12 @@ from .skills import Skill
 from .tools import Tool
 
 
-class ChooseResponse(BaseModel):
+class Choose(BaseModel):
     reasoning: str
     selection: str
 
 
-class DecideResponse(BaseModel):
+class Decide(BaseModel):
     reasoning: str
     answer: bool
 
@@ -24,12 +24,13 @@ class ToolResult(BaseModel):
     result: str
 
 
-class SkillSelection(BaseModel):
+class Equip(BaseModel):
     reasoning: str
     skill: str
 
 
 T = TypeVar("T")
+TModel = TypeVar("TModel", bound=BaseModel)
 
 
 class Context:
@@ -52,14 +53,21 @@ class Context:
 
         return messages
 
-    async def reply(self, *instructions: str | Message) -> Message:
+    async def reply(
+        self, *instructions: str | Message, persistent: bool = False
+    ) -> Message:
         """Reply to the provided messages.
 
         This method will use the LLM to generate a response to the provided messages.
         It does not use any skills.
         Mostly useful inside skills to finish the conversation.
         """
-        return await self.agent.llm.chat(self._expand_content(*instructions))
+        result = await self.agent.llm.chat(self._expand_content(*instructions))
+
+        if persistent:
+            self.add(result)
+
+        return result
 
     async def choose(self, options: list[T], *instructions: str | Message) -> T:
         """Choose one option out of many.
@@ -72,11 +80,11 @@ class Context:
 
         prompt = DEFAULT_CHOOSE_PROMPT.format(
             options="\n".join([f"- {option}" for option in options]),
-            format=ChooseResponse.model_json_schema(),
+            format=Choose.model_json_schema(),
         )
 
         response = await self.agent.llm.parse(
-            ChooseResponse, self._expand_content(*instructions, Message.system(prompt))
+            Choose, self._expand_content(*instructions, Message.system(prompt))
         )
 
         return mapping[response.selection]
@@ -89,11 +97,11 @@ class Context:
         Mostly useful inside skills to make decisions.
         """
         prompt = DEFAULT_DECIDE_PROMPT.format(
-            format=DecideResponse.model_json_schema(),
+            format=Decide.model_json_schema(),
         )
 
         response = await self.agent.llm.parse(
-            DecideResponse, self._expand_content(*instructions, Message.system(prompt))
+            Decide, self._expand_content(*instructions, Message.system(prompt))
         )
 
         return response.answer
@@ -115,11 +123,11 @@ class Context:
 
         prompt = DEFAULT_EQUIP_PROMPT.format(
             tools=tool_str,
-            format=ChooseResponse.model_json_schema(),
+            format=Choose.model_json_schema(),
         )
 
         response = await self.agent.llm.parse(
-            ChooseResponse, self._expand_content(*instructions, Message.system(prompt))
+            Choose, self._expand_content(*instructions, Message.system(prompt))
         )
 
         return mapping[response.selection]
@@ -136,25 +144,34 @@ class Context:
             skills="\n".join(
                 [f"- {skill.name}: {skill.description}" for skill in skills]
             ),
-            format=SkillSelection.model_json_schema(),
+            format=Equip.model_json_schema(),
         )
 
         messages = self._expand_content(*instructions, Message.system(prompt))
 
-        response = await self.agent.llm.parse(SkillSelection, messages)
+        response = await self.agent.llm.parse(Equip, messages)
         return skills_map[response.skill]
 
-    async def invoke(self, tool: Tool, *instructions: str | Message) -> ToolResult:
+    async def invoke(
+        self, tool: Tool, *instructions: str | Message, **kwargs
+    ) -> ToolResult:
         """
         Invokes a tool with the given instructions.
         This method will use the LLM to generate the parameters for the tool.
         The tool will then be invoked with the generated parameters.
         """
-        model_cls: type[BaseModel] = create_model(tool.name, **tool.parameters())
+        parameters = tool.parameters()
+
+        for k, v in kwargs.items():
+            parameters[k] = (parameters[k], v)
+
+        tool_name_camel_case = tool.name.title().replace("_", "")
+        model_cls: type[BaseModel] = create_model(tool_name_camel_case, **parameters)
 
         prompt = DEFAULT_INVOKE_PROMPT.format(
             name=tool.name,
-            parameters=tool.parameters(),
+            defaults=kwargs,
+            parameters={k: v for k,v in parameters.items() if k not in kwargs},
             description=tool.description,
             format=model_cls.model_json_schema(),
         )
@@ -170,3 +187,21 @@ class Context:
             description=tool.description,
             result=str(await tool.run(**response.model_dump())),
         )
+
+    async def parse(self, *instructions: str|Message, model:type[TModel]) -> TModel:
+        """
+        Parses the given instructions into a model.
+        This method will use the LLM to generate the parameters for the model.
+        """
+        messages = self._expand_content(*instructions)
+        return await self.agent.llm.parse(model, messages)
+
+    def add(self, *messages: Message | str) -> None:
+        """
+        Appends a message to the context.
+        """
+        for message in messages:
+            if isinstance(message, str):
+                message = Message.system(message)
+
+            self._messages.append(message)
