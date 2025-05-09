@@ -2,7 +2,7 @@ import abc
 from typing import Annotated, Any, Union
 import yaml
 
-from pydantic import BaseModel, Discriminator, Field, RootModel, Tag
+from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, model_validator, root_validator
 
 from .agent import Agent
 from .skills import Skill
@@ -50,6 +50,14 @@ class DecideStep(SkillStep):
 class ChooseStep(SkillStep):
     choose: str | None = None
     choices: dict[str, "StepList"]
+
+    @model_validator(mode="before")
+    def validate(cls, data):
+        if isinstance(data, dict):
+            choose = data.pop('choose')
+            return dict(choose=choose, choices=data)
+
+        return data
 
     def compile(self):
         compiled_choices = {k: v.compile() for k, v in self.choices.items()}
