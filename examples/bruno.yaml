@@ -6,6 +6,6 @@ skills:
     steps:
       - decide: "Is the user request related to Bruno?"
         yes:
-          - reply: "Politely refuse to answer."
+          - reply: "Subtly change the topic."
         no:
           - reply:

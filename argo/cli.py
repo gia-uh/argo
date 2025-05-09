@@ -60,8 +60,8 @@ def main():
     llm = LLM(model=MODEL, api_key=API_KEY, base_url=BASE_URL, callback=callback)
 
     config = parse(path)
-    rich.print(config)
-    rich.print()
+    # rich.print(config)
+    # rich.print()
 
     agent = config.compile(llm)
     loop(agent)
