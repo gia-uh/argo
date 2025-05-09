@@ -7,9 +7,7 @@ from pydantic import BaseModel
 import os
 
 
-
 class Message(BaseModel):
-
     role: str
     content: str
 

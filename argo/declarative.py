@@ -2,7 +2,7 @@ import abc
 from typing import Annotated, Any, Union
 import yaml
 
-from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, model_validator, root_validator
+from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, model_validator
 
 from .agent import Agent
 from .skills import Skill
@@ -54,7 +54,7 @@ class ChooseStep(SkillStep):
     @model_validator(mode="before")
     def validate(cls, data):
         if isinstance(data, dict):
-            choose = data.pop('choose')
+            choose = data.pop("choose")
             return dict(choose=choose, choices=data)
 
         return data
@@ -73,6 +73,60 @@ class ChooseStep(SkillStep):
             return await compiled_choices[choice](ctx)
 
         return choose_step
+
+
+class WhileStep(SkillStep):
+    condition: str
+    steps: "StepList"
+
+    @model_validator(mode="before")
+    def validate(cls, data):
+        if isinstance(data, dict):
+            return dict(condition=data['while'], steps=data['do'])
+
+        return data
+
+    def compile(self):
+        compiled_steps = self.steps.compile()
+
+        async def while_step(ctx: Context) -> Message:
+            m: Message = await compiled_steps(ctx)
+            ctx.add(m)
+
+            while await ctx.decide(self.condition):
+                m = await compiled_steps(ctx)
+                ctx.add(m)
+
+            return m
+
+        return while_step
+
+
+class UntilStep(SkillStep):
+    condition: str
+    steps: "StepList"
+
+    @model_validator(mode="before")
+    def validate(cls, data):
+        if isinstance(data, dict):
+            return dict(condition=data['until'], steps=data['do'])
+
+        return data
+
+    def compile(self):
+        compiled_steps = self.steps.compile()
+
+        async def until_step(ctx: Context) -> Message:
+            m: Message = await compiled_steps(ctx)
+            ctx.add(m)
+
+            while not await ctx.decide(self.condition):
+                m = await compiled_steps(ctx)
+                ctx.add(m)
+
+            return m
+
+        return until_step
 
 
 class ReplyStep(SkillStep):
@@ -100,6 +154,10 @@ def get_skill_step_discriminator_value(v: Any) -> str:
             return "ChooseStep"
         elif "reply" in v:
             return "ReplyStep"
+        elif "while" in v:
+            return "WhileStep"
+        elif "until" in v:
+            return "UntilStep"
 
     raise ValueError(f"Invalid SkillStep: {v}")
 
@@ -112,6 +170,8 @@ class StepList(
                     Annotated[DecideStep, Tag("DecideStep")],
                     Annotated[ChooseStep, Tag("ChooseStep")],
                     Annotated[ReplyStep, Tag("ReplyStep")],
+                    Annotated[WhileStep, Tag("WhileStep")],
+                    Annotated[UntilStep, Tag("UntilStep")],
                 ],
                 Discriminator(get_skill_step_discriminator_value),
             ]
