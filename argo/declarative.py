@@ -24,12 +24,12 @@ class SkillStep(BaseModel):
 
 class DecideStep(SkillStep):
     decide: str | None
-    when_true: "StepList"
-    when_false: "StepList"
+    yes: "StepList"
+    no: "StepList"
 
     def compile(self):
-        true_branch = self.when_true.compile()
-        false_branch = self.when_false.compile()
+        true_branch = self.yes.compile()
+        false_branch = self.no.compile()
 
         async def decide_step(ctx: Context) -> Message:
             instructions = []
@@ -96,18 +96,20 @@ def get_skill_step_discriminator_value(v: Any) -> str:
     raise ValueError(f"Invalid SkillStep: {v}")
 
 
-class StepList(RootModel[
-    list[
-        Annotated[
-            Union[
-                Annotated[DecideStep, Tag("DecideStep")],
-                Annotated[ChooseStep, Tag("ChooseStep")],
-                Annotated[ReplyStep, Tag("ReplyStep")],
-            ],
-            Discriminator(get_skill_step_discriminator_value),
+class StepList(
+    RootModel[
+        list[
+            Annotated[
+                Union[
+                    Annotated[DecideStep, Tag("DecideStep")],
+                    Annotated[ChooseStep, Tag("ChooseStep")],
+                    Annotated[ReplyStep, Tag("ReplyStep")],
+                ],
+                Discriminator(get_skill_step_discriminator_value),
+            ]
         ]
     ]
-]):
+):
     pass
 
     def compile(self):
@@ -160,6 +162,24 @@ class AgentConfig(BaseModel):
         return agent
 
 
+def _fix_dumb_yes_no(item):
+    def f(x):
+        if x is True:
+            return "yes"
+        if x is False:
+            return "no"
+        return x
+
+    if isinstance(item, list):
+        return [_fix_dumb_yes_no(x) for x in item]
+    if isinstance(item, dict):
+        return {f(k): _fix_dumb_yes_no(v) for k, v in item.items()}
+
+    return item
+
+
 def parse(path) -> AgentConfig:
     with open(path) as fp:
-        return AgentConfig(**yaml.safe_load(fp))
+        config = yaml.safe_load(fp)
+        config = _fix_dumb_yes_no(config)
+        return AgentConfig(**config)

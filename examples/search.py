@@ -33,10 +33,11 @@ async def chat(ctx: Context) -> Message:
     return await ctx.reply()
 
 
-class TaskBreakdown(BaseModel):
-    reasoning: str
-    remaining: str
-    next_step: str
+class Reasoning(BaseModel):
+    observation: str
+    thought: str
+    action: str
+    final: bool
 
 
 @agent.skill
@@ -47,29 +48,32 @@ async def question_answering(ctx: Context) -> Message:
     that might require external knowledge.
     """
 
+    ctx.add("You are a helpful assistant that can answer questions about the world."
+            "You have access to a search engine where you can search for information.")
+
     for i in range(5):
         task = await ctx.parse(
-            "Break down the user task into smaller steps."
-            "Provide the reasoning, then specify remaining part of the user task, "
-            "and then the next immediate step.",
-            model=TaskBreakdown
+            "Breakdown the user request. First provide an observation of the"
+            "current state of the task and the knowledge you already have."
+            "Then, provide a thought on the next step to take. Finally,"
+            "provide the action to take."
+            "If the existing information is enough to answer, set final=True.",
+            model=Reasoning
         )
 
         ctx.add(
-            "Given the user query and current results, here is a"
-            "breakdown of the task, including the remaining part of the task and the next step.",
             Message.tool(task)
         )
 
+        if task.final:
+            return await ctx.reply()
+
         results = await ctx.invoke(
             search,
-            "Provide the simplest query that fullfils the next immediate step",
+            "Provide the simplest query that fulfills the latest action.",
         )
 
         ctx.add(Message.tool(results))
-
-        if await ctx.decide("Is the information sufficient to answer the user?"):
-            return await ctx.reply("Reply concisely to the user.")
 
     return await ctx.reply(
         "Reply with the best available information in the context."
