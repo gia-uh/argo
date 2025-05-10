@@ -26,9 +26,9 @@ pip install argo
 
 **ARGO** can be used primarily in two modes: code-first, and declarative.
 
-### Code-first mode
+### Programatic mode
 
-The code-first mode involves using the `argo` Python package in your code, and is mostly useful if you need a deep integration with your own tools.
+The programatic or code-first mode involves using the `argo` Python package in your code, and is mostly useful if you need a deep integration with your own tools.
 
 Here is a quick hello world example that sets up a basic chat agent with no fancy tools or skills.
 We assume you have the relevant environment variables `API_KEY`, `BASE_URL` and `MODEL` exported.
@@ -91,14 +91,14 @@ Check the [examples](examples) folder for more detailed examples.
 
 Documentation is still under construction. However, you can check the examples for a quick start.
 
-The following are code-first examples:
+The following are programatic (code-based) examples:
 
 - [Hello World](examples/hello_world.py): The barebones chat app with no extra skills.
 - [Coder](examples/coder.py): A simple agent that can aswer math questions with a code interpreter.
 - [Banker](examples/banker.py): A simple agent that can manage a (simulated) bank account.
-- [Search](examples/search.py): An agent that can answer factual questions by searching the web.
+- [Trivia](examples/trivia.py): An agent that can answer factual, multi-hop questions from Wikipedia, using the ReAct paradigm.
 
-The following are YAML-first examples:
+The following are declarative (YAML-based) examples:
 
 - [Hello World](examples/hello_world.yaml): The barebones chat app with no extra skills.
 - [Bruno](examples/bruno.yaml): An agent that refuses to talk about Bruno.
@@ -137,6 +137,8 @@ A very important concept in **ARGO** is the conversation context. This object en
 ### Training Mode (under development)
 
 A unique feature of **ARGO** is the capability to "train" agents to become better at solving specific problems. Traditionally, the cheap way to "train" LLM agents is to provide them with a set of examples of how they should behave. But crafting specific examples for each problem is time-consuming and error-prone.
+
+Furthermore, when your agentic workflow is composed of multiple skills and tools, it becomes even more challenging to know how to craft examples that are relevant to each skill and tool, and how they interact with each other, and to maintain a coherent and relevant collection of examples to use in each possible reasoning path through the workflow.
 
 **ARGO** aims to solve this by interactively building a set of relevant, diverse, and high-quality examples for each pathway in the agentic workflow implemented. This is done by leveraging the LLM's own capabilities to generate and refine examples, plus user guidance to evaluate how well is the agent behaving.
 

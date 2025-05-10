@@ -14,7 +14,7 @@ def callback(chunk:str):
 agent = Agent(
     name="Agent",
     description="A helpful assistant.",
-    llm=LLM(model=os.getenv("MODEL"), callback=callback),
+    llm=LLM(model=os.getenv("MODEL"), callback=callback, verbose=True),
 )
 
 

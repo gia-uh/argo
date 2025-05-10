@@ -1,11 +1,14 @@
+import json
 from typing import TypeVar
 from pydantic import BaseModel, create_model
+import rich
 
 from .agent import Agent
 from .llm import Message
 from .prompts import *
 from .skills import Skill
 from .tools import Tool
+from .utils import generate_pydantic_code
 
 
 class Choose(BaseModel):
@@ -26,6 +29,11 @@ class ToolResult(BaseModel):
 
 class Equip(BaseModel):
     reasoning: str
+    tool: str
+
+
+class Engage(BaseModel):
+    reasoning: str
     skill: str
 
 
@@ -42,14 +50,21 @@ class Context:
     def messages(self) -> list[Message]:
         return list(self._messages)
 
+    def _wrap(self, message: Message | str | BaseModel):
+        if isinstance(message, Message):
+            return message
+        elif isinstance(message, str):
+            return Message.system(message)
+        elif isinstance(message, BaseModel):
+            return Message.tool(message)
+
+        raise TypeError(f"Invalid message type: {type(message)}")
+
     def _expand_content(self, *instructions):
         messages = self.messages
 
-        for instruction in instructions:
-            if isinstance(instruction, str):
-                instruction = Message.system(instruction)
-
-            messages.append(instruction)
+        for message in instructions:
+            messages.append(self._wrap(message))
 
         return messages
 
@@ -123,11 +138,11 @@ class Context:
 
         prompt = DEFAULT_EQUIP_PROMPT.format(
             tools=tool_str,
-            format=Choose.model_json_schema(),
+            format=Equip.model_json_schema(),
         )
 
         response = await self.agent.llm.parse(
-            Choose, self._expand_content(*instructions, Message.system(prompt))
+            Equip, self._expand_content(*instructions, Message.system(prompt))
         )
 
         return mapping[response.selection]
@@ -140,26 +155,29 @@ class Context:
         skills: list[Skill] = self.agent._skills
         skills_map = {s.name: s for s in skills}
 
-        prompt = DEFAULT_ENGANGE_PROMPT.format(
+        prompt = DEFAULT_ENGAGE_PROMPT.format(
             skills="\n".join(
                 [f"- {skill.name}: {skill.description}" for skill in skills]
             ),
-            format=Equip.model_json_schema(),
+            format=Engage.model_json_schema(),
         )
 
         messages = self._expand_content(*instructions, Message.system(prompt))
 
-        response = await self.agent.llm.parse(Equip, messages)
+        response = await self.agent.llm.parse(Engage, messages)
         return skills_map[response.skill]
 
     async def invoke(
-        self, tool: Tool, *instructions: str | Message, **kwargs
+        self, tool: Tool = None, *instructions: str | Message, **kwargs
     ) -> ToolResult:
         """
         Invokes a tool with the given instructions.
         This method will use the LLM to generate the parameters for the tool.
         The tool will then be invoked with the generated parameters.
         """
+        if tool is None:
+            tool = await self.equip(instructions)
+
         parameters = tool.parameters()
 
         for k, v in kwargs.items():
@@ -171,7 +189,7 @@ class Context:
         prompt = DEFAULT_INVOKE_PROMPT.format(
             name=tool.name,
             defaults=kwargs,
-            parameters={k: v for k,v in parameters.items() if k not in kwargs},
+            parameters={k: v for k, v in parameters.items() if k not in kwargs},
             description=tool.description,
             format=model_cls.model_json_schema(),
         )
@@ -188,20 +206,27 @@ class Context:
             result=str(await tool.run(**response.model_dump())),
         )
 
-    async def parse(self, *instructions: str|Message, model:type[TModel]) -> TModel:
+    async def create(self, *instructions: str | Message, model: type[TModel]) -> TModel:
         """
         Parses the given instructions into a model.
         This method will use the LLM to generate the parameters for the model.
         """
         messages = self._expand_content(*instructions)
+
+        model_code = generate_pydantic_code(model)
+
+        prompt = Message.system(DEFAULT_CREATE_PROMPT.format(
+            type=model.__name__,
+            signature=model_code,
+            docs=model.__doc__ or "",
+            format=json.dumps(model.model_json_schema(), indent=2),
+        ))
+
         return await self.agent.llm.parse(model, messages)
 
-    def add(self, *messages: Message | str) -> None:
+    def add(self, *messages: Message | str | BaseModel) -> None:
         """
         Appends a message to the context.
         """
         for message in messages:
-            if isinstance(message, str):
-                message = Message.system(message)
-
-            self._messages.append(message)
+            self._messages.append(self._wrap(message))

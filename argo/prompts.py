@@ -74,7 +74,7 @@ Provide only the values for the parameters without defaults.
 """
 
 
-DEFAULT_ENGANGE_PROMPT = """
+DEFAULT_ENGAGE_PROMPT = """
 You have the following skills:
 
 {skills}
@@ -86,6 +86,22 @@ First provide a reasoning of the selection,
 and then the name of the relevant skill.
 
 Reply with a JSON object in the following format:
+
+{format}
+"""
+
+
+DEFAULT_CREATE_PROMPT = """
+Your task is to create an object of type {type} defined as
+a Pydantic model with the following signature:
+
+```python
+{signature}
+```
+
+{docs}
+
+Reply only with a JSON object that represents a {type} in the following format:
 
 {format}
 """
