@@ -1,5 +1,5 @@
 import json
-from typing import TypeVar
+from typing import Literal, TypeVar
 from pydantic import BaseModel, create_model
 import rich
 
@@ -168,7 +168,11 @@ class Context:
         return skills_map[response.skill]
 
     async def invoke(
-        self, tool: Tool = None, *instructions: str | Message, **kwargs
+        self,
+        tool: Tool = None,
+        *instructions: str | Message,
+        errors: Literal["raise", "ignore"] = "raise",
+        **kwargs,
     ) -> ToolResult:
         """
         Invokes a tool with the given instructions.
@@ -200,10 +204,18 @@ class Context:
             model_cls, messages + [Message.system(prompt)]
         )
 
+        try:
+            result = await tool.run(**response.model_dump())
+        except Exception as e:
+            if errors == 'ignore':
+                result = f"ERROR: {str(e)}"
+            else:
+                raise
+
         return ToolResult(
             tool=tool.name,
             description=tool.description,
-            result=str(await tool.run(**response.model_dump())),
+            result=str(result),
         )
 
     async def create(self, *instructions: str | Message, model: type[TModel]) -> TModel:
@@ -215,12 +227,14 @@ class Context:
 
         model_code = generate_pydantic_code(model)
 
-        prompt = Message.system(DEFAULT_CREATE_PROMPT.format(
-            type=model.__name__,
-            signature=model_code,
-            docs=model.__doc__ or "",
-            format=json.dumps(model.model_json_schema(), indent=2),
-        ))
+        prompt = Message.system(
+            DEFAULT_CREATE_PROMPT.format(
+                type=model.__name__,
+                signature=model_code,
+                docs=model.__doc__ or "",
+                format=json.dumps(model.model_json_schema(), indent=2),
+            )
+        )
 
         return await self.agent.llm.parse(model, messages)
 

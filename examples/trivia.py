@@ -38,7 +38,7 @@ class Reasoning(BaseModel):
     final: bool
 
 
-class SearchSummary(BaseModel):
+class Result(BaseModel):
     query: str
     summary: str
 
@@ -80,7 +80,7 @@ async def question_answering(ctx: Context) -> Message:
             Make the summary as concise as possible.
             """,
             results,
-            model=SearchSummary
+            model=Result
         )
 
         ctx.add(summary)
