@@ -159,6 +159,11 @@ The result of a training session is a collection of structured examples that can
 
 ## Changelog
 
+### 0.2.3
+
+- Improve Context.parse to automatically inject model schema.
+- Improve the search example to showcase ReAct-style reasoning.
+
 ### 0.2.2
 
 - Redesign `choose` to define keys right in root step object.

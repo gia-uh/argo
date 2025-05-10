@@ -75,8 +75,8 @@ async def question_answering(ctx: Context) -> Message:
 
         summary = await ctx.create(
             """
-            Given the desired query, sumarize the fragment content in the
-            following web search result that helps answer the query.
+            Given the desired query, sumarize the fragment of content in the
+            following Wikipedia page that is related to the query.
             Make the summary as concise as possible.
             """,
             results,
