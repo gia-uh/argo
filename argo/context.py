@@ -1,5 +1,5 @@
 import json
-from typing import Literal, TypeVar
+from typing import Any, Literal, TypeVar
 from pydantic import BaseModel, create_model
 import rich
 
@@ -24,7 +24,8 @@ class Decide(BaseModel):
 class ToolResult(BaseModel):
     tool: str
     description: str
-    result: str
+    error: str | None = None
+    result: Any | None = None
 
 
 class Equip(BaseModel):
@@ -171,7 +172,7 @@ class Context:
         self,
         tool: Tool = None,
         *instructions: str | Message,
-        errors: Literal["raise", "ignore"] = "raise",
+        errors: Literal["raise", "handle"] = "raise",
         **kwargs,
     ) -> ToolResult:
         """
@@ -207,15 +208,19 @@ class Context:
         try:
             result = await tool.run(**response.model_dump())
         except Exception as e:
-            if errors == 'ignore':
-                result = f"ERROR: {str(e)}"
-            else:
-                raise
+            if errors == 'handle':
+                return ToolResult(
+                    tool=tool.name,
+                    description=tool.description,
+                    error=str(e)
+                )
+
+            raise
 
         return ToolResult(
             tool=tool.name,
             description=tool.description,
-            result=str(result),
+            result=result,
         )
 
     async def create(self, *instructions: str | Message, model: type[TModel]) -> TModel:
@@ -224,17 +229,16 @@ class Context:
         This method will use the LLM to generate the parameters for the model.
         """
         messages = self._expand_content(*instructions)
-
         model_code = generate_pydantic_code(model)
 
-        prompt = Message.system(
+        messages.append(Message.system(
             DEFAULT_CREATE_PROMPT.format(
                 type=model.__name__,
                 signature=model_code,
                 docs=model.__doc__ or "",
                 format=json.dumps(model.model_json_schema(), indent=2),
             )
-        )
+        ))
 
         return await self.agent.llm.parse(model, messages)
 

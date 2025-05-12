@@ -51,7 +51,13 @@ async def question_answering(ctx: Context) -> Message:
     that might require external knowledge.
     """
 
-    ctx.add("You have access to Wikipedia's search engine to answer the user quesstion.")
+    ctx.add(
+        """
+        You have access to Wikipedia's search engine to answer the user quesstion.
+        Do not assume you know anything about the question, always double check
+        against Wikipedia.
+        """
+    )
 
     for i in range(5):
         reasoning = await ctx.create(
@@ -71,7 +77,7 @@ async def question_answering(ctx: Context) -> Message:
         if reasoning.final:
             return await ctx.reply()
 
-        results = await ctx.invoke(search)
+        results = await ctx.invoke(search, errors='handle')
 
         summary = await ctx.create(
             """
@@ -89,10 +95,10 @@ async def question_answering(ctx: Context) -> Message:
 
 
 @agent.tool
-async def search(query: str) -> str:
+async def search(query: str) -> list[str]:
     """Search Wikipedia for information."""
-    candidates = wikipedia.search(query, results=1)
-    return wikipedia.page(candidates[0]).content
+    candidates = wikipedia.search(query, results=10)
+    return [wikipedia.summary(r) for r in candidates]
 
 
 loop(agent)
