@@ -159,6 +159,10 @@ The result of a training session is a collection of structured examples that can
 
 ## Changelog
 
+### main
+
+- Error handling for tool invocations.
+
 ### 0.2.3
 
 - Improve `Context.parse` to automatically inject model schema.
