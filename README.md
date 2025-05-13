@@ -87,6 +87,17 @@ argo <path/to/config.yaml>
 
 Check the [examples](examples) folder for more detailed examples.
 
+### Integrated server
+
+If you install with the `server` extra (e.g., `pip install argo[server]`),
+then you'll have the `argo serve` command available, that spins up a minimalistic FastAPI
+server for your agent. This is useful for integrating with other services, or for building
+a web-based interface for your agent.
+
+This is not meant to be a production-ready REST server, it doesn't handle conversation
+context automatically (meaning you need to mantain and pass the whole conversation in each request)
+and it currently doesn't support streaming mode.
+
 ## Documentation
 
 Documentation is still under construction. However, you can check the examples for a quick start.
@@ -151,21 +162,23 @@ The result of a training session is a collection of structured examples that can
 ## Roadmap
 
 - Improve documentation and examples.
-- Add skill definition via YAML.
 - Add tool definition via YAML and REST endpoints.
+- Add streaming mode for server.
 - Add support for skill composition.
 - Add support for multi-agent collaboration and delegation.
 - Add training mode.
 
 ## Changelog
 
-### main
+### 0.2.4
 
+- Add automatic FastAPI server for agents.
+- Improve CLI with `typer`.
 - Error handling for tool invocations.
 
 ### 0.2.3
 
-- Improve `Context.parse` to automatically inject model schema.
+- Improve `Context.create` to automatically inject model schema.
 - Improve the search example to showcase ReAct-style reasoning.
 
 ### 0.2.2

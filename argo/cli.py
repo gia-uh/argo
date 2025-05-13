@@ -4,13 +4,16 @@ import sys
 from pathlib import Path
 import dotenv
 import rich
-import rich.prompt
+from typer import Typer, Exit
 from .agent import Agent
 from .llm import LLM, Message
 from .declarative import parse
 
 
-def loop(agent:Agent):
+app = Typer(name="argo", help="Argo CLI", no_args_is_help=True)
+
+
+def loop(agent: Agent):
     """Runs a CLI agent loop with integrated
     conversation history management.
 
@@ -44,11 +47,13 @@ def loop(agent:Agent):
     asyncio.run(run())
 
 
-def main():
+@app.command()
+def run(path: Path):
+    """
+    Run an agent in the terminal with a basic CLI loop.
+    """
     dotenv.load_dotenv()
     import os
-
-    path = Path(sys.argv[1])
 
     API_KEY = os.getenv("API_KEY")
     BASE_URL = os.getenv("BASE_URL")
@@ -60,11 +65,35 @@ def main():
     llm = LLM(model=MODEL, api_key=API_KEY, base_url=BASE_URL, callback=callback)
 
     config = parse(path)
-    # rich.print(config)
-    # rich.print()
-
     agent = config.compile(llm)
     loop(agent)
+
+
+@app.command()
+def serve(path: Path, host: str = "127.0.0.1", port: int = 8000):
+    "Start the FastAPI server to run an agent in API-mode."
+    try:
+        from .server import serve as serve_loop
+    except ImportError:
+        print("Please install argo[server] to use this command.")
+        raise Exit(1)
+
+    dotenv.load_dotenv()
+    import os
+
+    API_KEY = os.getenv("API_KEY")
+    BASE_URL = os.getenv("BASE_URL")
+    MODEL = os.getenv("MODEL")
+
+    llm = LLM(model=MODEL, api_key=API_KEY, base_url=BASE_URL)
+
+    config = parse(path)
+    agent = config.compile(llm)
+    serve_loop(agent, host=host, port=port)
+
+
+def main():
+    app()
 
 
 if __name__ == "__main__":

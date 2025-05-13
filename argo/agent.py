@@ -33,6 +33,14 @@ class Agent:
         return self._description
 
     @property
+    def tools(self) -> list[Tool]:
+        return list(self._tools)
+
+    @property
+    def skills(self) -> list[Skill]:
+        return list(self._skills)
+
+    @property
     def llm(self):
         return self._llm
 
