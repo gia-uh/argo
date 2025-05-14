@@ -32,14 +32,11 @@ def loop(agent: Agent):
     rich.print(f"[yellow]Press Ctrl+D to exit at any time.\n[/yellow]")
 
     async def run():
-        history = []
-
         while True:
             try:
                 user_input = input(">>> ")
-                history.append(Message.user(user_input))
-                response = await agent.perform(history)
-                history.append(response)
+                m = Message.user(user_input)
+                await agent.perform(m)
                 print("\n")
             except (EOFError, KeyboardInterrupt):
                 break

@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, create_model
+
+from argo.tools import Tool
 
 from .agent import Agent
 from .llm import Message
@@ -31,6 +33,10 @@ def build(agent: Agent) -> FastAPI:
     This method sets up the following default routes:
      - `/` to return the agent's description.
      - `/chat` to perform the chat with the agent.
+
+    It also sets up endpoints for each tool.
+
+    The agent is stored in the app's state, so it can be accessed from the routes.
     """
     app = FastAPI()
     app.state.agent = agent
@@ -55,10 +61,27 @@ def build(agent: Agent) -> FastAPI:
         )
 
     @app.post("/chat")
-    async def chat(conversation: list[Message]) -> Message:
-        return await agent.perform(conversation)
+    async def chat(message: Message) -> Message:
+        return await agent.perform(message)
+
+    for tool in agent.tools:
+        model_cls = build_model(tool)
+
+        @app.post(f"/{tool.name}", response_model=model_cls)
+        async def tool(params: model_cls) -> dict: # type: ignore
+            return await tool.run(**params.dict())
 
     return app
+
+
+def build_model(tool: Tool) -> type[BaseModel]:
+    """
+    Builds a Pydantic model from a tool.
+    """
+    return create_model(
+        tool.name,
+        **{k: v for k, v in tool.parameters()},
+    )
 
 
 def serve(agent: Agent, host:str="127.0.0.1", port:int=8000):
