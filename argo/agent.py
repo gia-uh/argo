@@ -8,7 +8,13 @@ from .skills import Skill, MethodSkill
 from .tools import Tool, MethodTool
 
 
-class Agent:
+class AgentBase[In, Out](abc.ABC):
+    @abc.abstractmethod
+    async def perform(self, input: Message[In]) -> Message[Out]:
+        pass
+
+
+class Agent[In, Out](AgentBase[In, Out]):
     def __init__(
         self,
         name: str,
@@ -16,6 +22,7 @@ class Agent:
         llm: LLM,
         *,
         system_prompt=DEFAULT_SYSTEM_PROMPT,
+        persistent:bool=True
     ):
         self._name = name
         self._description = description
@@ -23,6 +30,12 @@ class Agent:
         self._skills = []
         self._tools = []
         self._system_prompt = system_prompt.format(name=name, description=description)
+        self._conversation = [Message.system(self._system_prompt)]
+        self._persistent = persistent
+
+    @property
+    def persistent(self):
+        return self.persistent
 
     @property
     def name(self):
@@ -44,16 +57,20 @@ class Agent:
     def llm(self):
         return self._llm
 
-    async def perform(self, messages: list[Message]) -> Message:
+    async def perform(self, input: Message[In]) -> Message[Out]:
         from .context import Context
         """Main entrypoint for the agent.
 
         This method will select the right skill to perform the task and then execute it.
         The skill is selected based on the messages and the skills available to the agent.
         """
-        context = Context(self, [Message.system(self._system_prompt)] + list(messages))
+        context = Context(self, list(self._conversation) + [input])
         skill = await context.engage()
-        return await skill.execute(context)
+        result = await skill.execute(context)
+
+        if self.persistent:
+            self._conversation = context.messages
+            self._conversation.append(result)
 
     def skill(self, target):
         if isinstance(target, Skill):

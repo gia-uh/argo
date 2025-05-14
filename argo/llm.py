@@ -7,25 +7,31 @@ from pydantic import BaseModel
 import os
 
 
-class Message(BaseModel):
+class Message[T: BaseModel | str](BaseModel):
     role: str
-    content: str
+    content: T
 
     @classmethod
-    def system(cls, content: str) -> "Message":
+    def system(cls, content: T) -> "Message[T]":
         return cls(role="system", content=content)
 
     @classmethod
-    def user(cls, content: str) -> "Message":
+    def user(cls, content: T) -> "Message[T]":
         return cls(role="user", content=content)
 
     @classmethod
-    def assistant(cls, content: str) -> "Message":
+    def assistant(cls, content: T) -> "Message[T]":
         return cls(role="assistant", content=content)
 
     @classmethod
-    def tool(cls, content: BaseModel) -> "Message":
-        return cls(role="tool", content=content.model_dump_json())
+    def tool(cls, content: T) -> "Message[T]":
+        return cls(role="tool", content=content)
+
+    def dump(self) -> dict:
+        return dict(
+            role = self.role,
+            content = self.content if isinstance(self.content, str) else self.content.model_dump_json()
+        )
 
 
 T = TypeVar("T", bound=BaseModel)
@@ -58,7 +64,7 @@ class LLM:
 
         async for chunk in await self.client.chat.completions.create(
             model=self.model,
-            messages=[message.model_dump() for message in messages],
+            messages=[message.dump() for message in messages],
             stream=True,
             **kwargs,
         ):
@@ -80,7 +86,7 @@ class LLM:
     async def parse(self, model: Type[T], messages: list[Message], **kwargs) -> T:
         response = await self.client.beta.chat.completions.parse(
             model=self.model,
-            messages=[message.model_dump() for message in messages],
+            messages=[message.dump() for message in messages],
             response_format=model,
             **kwargs,
         )
