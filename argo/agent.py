@@ -35,7 +35,7 @@ class Agent[In, Out](AgentBase[In, Out]):
 
     @property
     def persistent(self):
-        return self.persistent
+        return self._persistent
 
     @property
     def name(self):
