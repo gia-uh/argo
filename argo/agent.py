@@ -85,8 +85,8 @@ class Agent[In, Out](AgentBase[In, Out]):
         if not callable(target):
             raise ValueError("Skill must be a callable.")
 
-        if not inspect.iscoroutinefunction(target):
-            raise ValueError("Skill must be a coroutine function.")
+        if not inspect.isasyncgenfunction(target):
+            raise ValueError("Skill must be an async generator.")
 
         name = target.__name__
         description = inspect.getdoc(target)
@@ -98,15 +98,6 @@ class Agent[In, Out](AgentBase[In, Out]):
         if isinstance(target, Tool):
             self._tools.append(target)
             return target
-
-        # BUG: Doesn't work for sync method
-        if not inspect.iscoroutinefunction(target):
-
-            @functools.wraps(target)
-            async def wrapper(*args, **kwargs):
-                return target(*args, **kwargs)
-
-            target = wrapper
 
         name = target.__name__
         description = inspect.getdoc(target)
