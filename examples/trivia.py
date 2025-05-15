@@ -22,13 +22,13 @@ agent = Agent(
 
 
 @agent.skill
-async def chat(ctx: Context) -> Message:
+async def chat(ctx: Context):
     """Casual chat with the user.
 
     Use this only for greetings, basic chat,
     and questions regarding your own capabilities.
     """
-    return await ctx.reply()
+    yield await ctx.reply()
 
 
 class Reasoning(BaseModel):
@@ -44,7 +44,7 @@ class Result(BaseModel):
 
 
 @agent.skill
-async def question_answering(ctx: Context) -> Message:
+async def question_answering(ctx: Context):
     """Answer questions about the world.
 
     Use this skill when the user asks any questions
@@ -91,7 +91,7 @@ async def question_answering(ctx: Context) -> Message:
 
         ctx.add(summary)
 
-    return await ctx.reply("Reply with the best available information in the context.")
+    yield await ctx.reply("Reply with the best available information in the context.")
 
 
 @agent.tool

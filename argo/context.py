@@ -1,7 +1,6 @@
 import json
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal
 from pydantic import BaseModel, create_model
-import rich
 
 from .agent import Agent
 from .llm import Message
@@ -36,10 +35,6 @@ class Equip(BaseModel):
 class Engage(BaseModel):
     reasoning: str
     skill: str
-
-
-T = TypeVar("T")
-TModel = TypeVar("TModel", bound=BaseModel)
 
 
 class Context:
@@ -85,7 +80,7 @@ class Context:
 
         return result
 
-    async def choose(self, options: list[T], *instructions: str | Message) -> T:
+    async def choose[T](self, options: list[T], *instructions: str | Message) -> T:
         """Choose one option out of many.
 
         This method will use the LLM to choose one option out of many.
@@ -223,7 +218,7 @@ class Context:
             result=result,
         )
 
-    async def create(self, *instructions: str | Message, model: type[TModel]) -> TModel:
+    async def create[T: BaseModel](self, *instructions: str | Message, model: type[T]) -> T:
         """
         Parses the given instructions into a model.
         This method will use the LLM to generate the parameters for the model.
@@ -248,3 +243,9 @@ class Context:
         """
         for message in messages:
             self._messages.append(self._wrap(message))
+
+    def pop(self) -> Message:
+        """
+        Pops the last message from the context.
+        """
+        return self._messages.pop()

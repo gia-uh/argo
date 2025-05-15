@@ -19,10 +19,10 @@ agent = Agent(
 
 
 @agent.skill
-async def chat(ctx: Context) -> Message:
+async def chat(ctx: Context):
     """Casual chat with the user.
     """
-    return await ctx.reply()
+    yield await ctx.reply()
 
 
 loop(agent)

@@ -2,6 +2,8 @@ import abc
 import functools
 import inspect
 
+from typing import AsyncIterator
+
 from .llm import LLM, Message
 from .prompts import DEFAULT_SYSTEM_PROMPT
 from .skills import Skill, MethodSkill
@@ -10,7 +12,7 @@ from .tools import Tool, MethodTool
 
 class AgentBase[In, Out](abc.ABC):
     @abc.abstractmethod
-    async def perform(self, input: Message[In]) -> Message[Out]:
+    async def perform(self, input: Message[In]) -> AsyncIterator[Message[Out]]:
         pass
 
 
@@ -57,7 +59,7 @@ class Agent[In, Out](AgentBase[In, Out]):
     def llm(self):
         return self._llm
 
-    async def perform(self, input: Message[In]) -> Message[Out]:
+    async def perform(self, input: Message[In]) -> AsyncIterator[Message[Out]]:
         from .context import Context
         """Main entrypoint for the agent.
 
@@ -66,11 +68,14 @@ class Agent[In, Out](AgentBase[In, Out]):
         """
         context = Context(self, list(self._conversation) + [input])
         skill = await context.engage()
-        result = await skill.execute(context)
 
-        if self.persistent:
-            self._conversation = context.messages
-            self._conversation.append(result)
+        messages = []
+
+        async for m in await skill.execute(context):
+            yield m
+            messages.append(m)
+
+        self._conversation.extend(messages)
 
     def skill(self, target):
         if isinstance(target, Skill):

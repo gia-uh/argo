@@ -41,17 +41,17 @@ agent = Agent(
 
 # Add a basic chat skill
 @agent.skill
-async def casual_chat(ctx: Context) -> Message:
+async def casual_chat(ctx: Context):
     """Casual chat with the user.
 
     Use this skill when the user asks a general question or engages
     in casual chat.
     """
-    return await ctx.reply()
+    yield await ctx.reply()
 
 
 @agent.skill
-async def banker(ctx: Context) -> Message:
+async def banker(ctx: Context):
     """Interact with the bank account.
 
     Use this skill when the user asks for information about the bank account,
@@ -59,7 +59,7 @@ async def banker(ctx: Context) -> Message:
     """
     tool = await ctx.equip()
     result = await ctx.invoke(tool)
-    return await ctx.reply(Message.tool(result))
+    yield await ctx.reply(Message.tool(result))
 
 
 @agent.tool
