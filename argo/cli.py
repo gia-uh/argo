@@ -36,7 +36,9 @@ def loop(agent: Agent, print_response:bool=False):
             try:
                 user_input = input(">>> ")
                 m = Message.user(user_input)
-                await agent.perform(m)
+
+                async for m in agent.perform(m):
+                    pass
 
                 if print_response:
                     rich.print(m)

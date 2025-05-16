@@ -1,5 +1,3 @@
-import abc
-import functools
 import inspect
 
 from typing import AsyncIterator
@@ -10,13 +8,7 @@ from .skills import Skill, MethodSkill
 from .tools import Tool, MethodTool
 
 
-class AgentBase[In, Out](abc.ABC):
-    @abc.abstractmethod
-    async def perform(self, input: Message[In]) -> AsyncIterator[Message[Out]]:
-        pass
-
-
-class Agent[In, Out](AgentBase[In, Out]):
+class Agent:
     def __init__(
         self,
         name: str,
@@ -59,7 +51,7 @@ class Agent[In, Out](AgentBase[In, Out]):
     def llm(self):
         return self._llm
 
-    async def perform(self, input: Message[In]) -> AsyncIterator[Message[Out]]:
+    async def perform(self, input: Message) -> AsyncIterator[Message]:
         from .context import Context
         """Main entrypoint for the agent.
 
@@ -71,7 +63,7 @@ class Agent[In, Out](AgentBase[In, Out]):
 
         messages = []
 
-        async for m in await skill.execute(context):
+        async for m in skill.execute(context):
             yield m
             messages.append(m)
 
@@ -89,7 +81,7 @@ class Agent[In, Out](AgentBase[In, Out]):
             raise ValueError("Skill must be an async generator.")
 
         name = target.__name__
-        description = inspect.getdoc(target)
+        description = inspect.getdoc(target) or ""
         skill = MethodSkill(name, description, target)
         self._skills.append(skill)
         return skill

@@ -1,52 +1,61 @@
 import inspect
-from typing import Callable, Type, TypeVar
+from typing import Any, Callable, Literal
 import rich
-import json
 import openai
 from pydantic import BaseModel
 import os
 
+from openai.types.chat import ChatCompletionMessageParam
 
-class Message[T: BaseModel | str](BaseModel):
-    role: str
-    content: T
+
+class Message(BaseModel):
+    role: Literal["user", "system", "assistant", "tool"]
+    content: Any
 
     @classmethod
-    def system(cls, content: T) -> "Message[T]":
+    def system(cls, content: Any) -> "Message":
         return cls(role="system", content=content)
 
     @classmethod
-    def user(cls, content: T) -> "Message[T]":
+    def user(cls, content: Any) -> "Message":
         return cls(role="user", content=content)
 
     @classmethod
-    def assistant(cls, content: T) -> "Message[T]":
+    def assistant(cls, content: Any) -> "Message":
         return cls(role="assistant", content=content)
 
     @classmethod
-    def tool(cls, content: T) -> "Message[T]":
+    def tool(cls, content: Any) -> "Message":
         return cls(role="tool", content=content)
 
-    def dump(self) -> dict:
-        return dict(
-            role = self.role,
-            content = self.content if isinstance(self.content, str) else self.content.model_dump_json()
+    def dump(self) -> ChatCompletionMessageParam:
+        return dict(  # type: ignore
+            role=self.role,
+            content=(
+                self.content.model_dump_json()
+                if isinstance(self.content, BaseModel)
+                else str(self.content)
+            ),
         )
 
+    def unpack[T: BaseModel](self, t: type[T]) -> T:
+        if isinstance(self.content, t):
+            return self.content
 
-T = TypeVar("T", bound=BaseModel)
+        if isinstance(self.content, str):
+            return t.model_validate_json(self.content)
 
-LLMCallback = Callable[[str], None]
+        raise TypeError(f"Cannot unpack {self.content} into {t}")
 
 
 class LLM:
     def __init__(
         self,
         model: str,
-        callback: LLMCallback = None,
+        callback: Callable[[str], None] | None = None,
         verbose: bool = False,
-        base_url: str = None,
-        api_key: str = None,
+        base_url: str | None = None,
+        api_key: str | None = None,
     ):
         self.model = model
         self.verbose = verbose
@@ -83,7 +92,9 @@ class LLM:
 
         return Message.assistant("".join(result))
 
-    async def parse(self, model: Type[T], messages: list[Message], **kwargs) -> T:
+    async def parse[T: BaseModel](
+        self, model: type[T], messages: list[Message], **kwargs
+    ) -> T:
         response = await self.client.beta.chat.completions.parse(
             model=self.model,
             messages=[message.dump() for message in messages],
@@ -95,5 +106,8 @@ class LLM:
 
         if self.verbose:
             rich.print(result)
+
+        if result is None:
+            raise ValueError("Failed to parse the response.")
 
         return result

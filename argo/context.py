@@ -52,7 +52,7 @@ class Context:
         elif isinstance(message, str):
             return Message.system(message)
         elif isinstance(message, BaseModel):
-            return Message.tool(message)
+            return Message.tool(message.model_dump_json())
 
         raise TypeError(f"Invalid message type: {type(message)}")
 
@@ -118,7 +118,7 @@ class Context:
         return response.answer
 
     async def equip(
-        self, *instructions: str | Message, tools: list[Tool] = None
+        self, *instructions: str | Message, tools: list[Tool] | None = None
     ) -> Tool:
         """Selects one and exactly one tool.
 
@@ -141,7 +141,7 @@ class Context:
             Equip, self._expand_content(*instructions, Message.system(prompt))
         )
 
-        return mapping[response.selection]
+        return mapping[response.tool]
 
     async def engage(self, *instructions: str | Message) -> Skill:
         """
@@ -165,7 +165,7 @@ class Context:
 
     async def invoke(
         self,
-        tool: Tool = None,
+        tool: Tool | None = None,
         *instructions: str | Message,
         errors: Literal["raise", "handle"] = "raise",
         **kwargs,
@@ -176,9 +176,9 @@ class Context:
         The tool will then be invoked with the generated parameters.
         """
         if tool is None:
-            tool = await self.equip(instructions)
+            tool = await self.equip(*instructions)
 
-        parameters = tool.parameters()
+        parameters: dict[str, Any] = tool.parameters()
 
         for k, v in kwargs.items():
             parameters[k] = (parameters[k], v)

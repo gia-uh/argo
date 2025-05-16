@@ -1,10 +1,10 @@
 import abc
 from .llm import Message
-from typing import AsyncIterator
+from typing import AsyncIterator, Generator
 from pydantic import BaseModel
 
 
-class Skill[T: BaseModel | str]:
+class Skill:
     def __init__(self, name: str, description: str):
         self._name = name
         self._description = description
@@ -18,15 +18,15 @@ class Skill[T: BaseModel | str]:
         return self._description
 
     @abc.abstractmethod
-    async def execute(self, ctx) -> AsyncIterator[Message[T]]:
+    async def execute(self, ctx) -> AsyncIterator[Message]:
         pass
 
 
-class MethodSkill[T: BaseModel | str](Skill[T]):
+class MethodSkill(Skill):
     def __init__(self, name: str, description: str, target):
         super().__init__(name, description)
         self._target = target
 
-    async def execute(self, ctx) -> AsyncIterator[Message[T]]:
-        async for m in await self._target(ctx):
+    async def execute(self, ctx): # type: ignore
+        async for m in self._target(ctx):
             yield m

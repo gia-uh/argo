@@ -25,13 +25,14 @@ wheels = [
 
 [[package]]
 name = "argo-ai"
-version = "0.2.3"
+version = "0.2.4"
 source = { editable = "." }
 dependencies = [
     { name = "openai" },
     { name = "pydantic" },
     { name = "pyyaml" },
     { name = "rich" },
+    { name = "runtime-generics" },
     { name = "typer" },
 ]
 
@@ -55,6 +56,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.11.3" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "rich", specifier = ">=14.0.0" },
+    { name = "runtime-generics", specifier = ">=3.3.1" },
     { name = "typer", specifier = ">=0.15.3" },
 ]
 
@@ -69,6 +71,15 @@ dev = [
     { name = "wikipedia", specifier = ">=1.4.0" },
 ]
 server = [{ name = "fastapi", extras = ["standard"], specifier = ">=0.115.12" }]
+
+[[package]]
+name = "backframe"
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a4/f7/d1cc8298742cb8e858be2525f78e4334bcb16e040016b5af8cc499648de2/backframe-0.1.2.tar.gz", hash = "sha256:531c97446e83d0a73d80b0484bd8de0423f7862fd3564ce118adc3b6c61423c4", size = 6019 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1c/59/928163491273aa4db0950028a4f7403b8172b2ad2fb43dc5e525264ddb40/backframe-0.1.2-py3-none-any.whl", hash = "sha256:b9ab4469d5d9a646640a12ab0f9818d0cfd5481dac91a74e87c7a65e3fcc4d13", size = 5365 },
+]
 
 [[package]]
 name = "beautifulsoup4"
@@ -757,6 +768,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/e1/72/43b123e4db52144c8add336581de52185097545981ff6e9e58a21861c250/ruff-0.11.7-py3-none-win32.whl", hash = "sha256:f25dfb853ad217e6e5f1924ae8a5b3f6709051a13e9dad18690de6c8ff299e26", size = 10362436 },
     { url = "https://files.pythonhosted.org/packages/c5/a0/3e58cd76fdee53d5c8ce7a56d84540833f924ccdf2c7d657cb009e604d82/ruff-0.11.7-py3-none-win_amd64.whl", hash = "sha256:0a931d85959ceb77e92aea4bbedfded0a31534ce191252721128f77e5ae1f98a", size = 11566676 },
     { url = "https://files.pythonhosted.org/packages/68/ca/69d7c7752bce162d1516e5592b1cc6b6668e9328c0d270609ddbeeadd7cf/ruff-0.11.7-py3-none-win_arm64.whl", hash = "sha256:778c1e5d6f9e91034142dfd06110534ca13220bfaad5c3735f6cb844654f6177", size = 10677936 },
+]
+
+[[package]]
+name = "runtime-generics"
+version = "3.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "backframe" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b9/34/b1b82a4f623d61fccc21361e402dbee87338bc03a018844d51f5c7eb368c/runtime_generics-3.3.1.tar.gz", hash = "sha256:1ea40ad2b735aed3cdf567efac980e4dbc9c9e9e76144c4f73d1dd440583ffb1", size = 13076 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ce/5d/e73ddf67bf269d290413d5805a485856c7abb15fa4a070935fd250f2c3a3/runtime_generics-3.3.1-py3-none-any.whl", hash = "sha256:bf9c74a17cece2f874b3e3f6d1857fd5313c789f8f0854ac4f7669f91ad748ad", size = 10936 },
 ]
 
 [[package]]

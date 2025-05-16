@@ -1,4 +1,4 @@
-from argo import Agent, LLM, Message, Context
+from argo import Agent, LLM, Context
 from argo.cli import loop
 import dotenv
 import os
@@ -14,7 +14,7 @@ def callback(chunk:str):
 agent = Agent(
     name="Agent",
     description="A helpful assistant.",
-    llm=LLM(model=os.getenv("MODEL"), callback=callback, verbose=True),
+    llm=LLM(model=os.getenv("MODEL"), callback=callback, verbose=False),
 )
 
 
