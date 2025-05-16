@@ -5,7 +5,7 @@ from pathlib import Path
 import dotenv
 import rich
 from typer import Typer, Exit
-from .agent import Agent
+from .agent import ChatAgent
 from .llm import LLM, Message
 from .declarative import parse
 
@@ -13,7 +13,7 @@ from .declarative import parse
 app = Typer(name="argo", help="Argo CLI", no_args_is_help=True)
 
 
-def loop(agent: Agent, print_response:bool=False):
+def loop(agent: ChatAgent, print_response:bool=False):
     """Runs a CLI agent loop with integrated
     conversation history management.
 

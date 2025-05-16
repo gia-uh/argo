@@ -1,6 +1,7 @@
 import inspect
-
-from typing import AsyncIterator
+import abc
+from typing import AsyncIterator, Protocol
+import runtime_generics
 
 from .llm import LLM, Message
 from .prompts import DEFAULT_SYSTEM_PROMPT
@@ -8,7 +9,60 @@ from .skills import Skill, MethodSkill
 from .tools import Tool, MethodTool
 
 
-class Agent:
+class Agentic(Protocol):
+    @property
+    @abc.abstractmethod
+    def name(self) -> str:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def description(self) -> str:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def types(self) -> tuple[type, type]:
+        pass
+
+    @abc.abstractmethod
+    def perform(self, input: Message) -> AsyncIterator[Message]:
+        pass
+
+
+@runtime_generics.runtime_generic
+class AgentBase[In, Out](Agentic):
+    def __init__(self, name: str, description: str):
+        self._name = name
+        self._description = description
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def description(self):
+        return self._description
+
+    @property
+    def types(self):
+        in_t, out_t = runtime_generics.get_type_arguments(self)
+        return (in_t, out_t)
+
+    async def perform(self, input: Message) -> AsyncIterator[Message]:
+        in_t, _ = self.types
+
+        data: In = input.unpack(in_t)
+
+        async for m in self.process(data):
+            yield Message.assistant(m)
+
+    @abc.abstractmethod
+    def process(self, input: In) -> AsyncIterator[Out]:
+        pass
+
+
+class ChatAgent(Agentic):
     def __init__(
         self,
         name: str,
@@ -48,6 +102,10 @@ class Agent:
         return list(self._skills)
 
     @property
+    def types(self):
+        return (str, str)
+
+    @property
     def llm(self):
         return self._llm
 
@@ -63,7 +121,7 @@ class Agent:
 
         messages = []
 
-        async for m in skill.execute(context):
+        async for m in skill.execute(context): # type: ignore
             yield m
             messages.append(m)
 

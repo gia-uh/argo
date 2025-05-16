@@ -4,7 +4,7 @@ import yaml
 
 from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, model_validator
 
-from .agent import Agent
+from .agent import ChatAgent
 from .skills import Skill
 from .tools import Tool
 from .llm import LLM, Message
@@ -221,8 +221,8 @@ class AgentConfig(BaseModel):
     tools: list[ToolConfig] = Field(default_factory=list)
     skills: list[SkillConfig]
 
-    def compile(self, llm: LLM) -> Agent:
-        agent = Agent(name=self.name, description=self.description, llm=llm)
+    def compile(self, llm: LLM) -> ChatAgent:
+        agent = ChatAgent(name=self.name, description=self.description, llm=llm)
 
         for skill in self.skills:
             agent.skill(skill.compile())

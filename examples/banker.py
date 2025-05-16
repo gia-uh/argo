@@ -1,4 +1,4 @@
-from argo import Agent, LLM, Message, Context
+from argo import ChatAgent, LLM, Message, Context
 import dotenv
 import os
 
@@ -32,7 +32,7 @@ def callback(chunk: str):
     print(chunk, end="")
 
 
-agent = Agent(
+agent = ChatAgent(
     name="Banker",
     description="A helpful assistant that can execute bank transactions and reply with the account information.",
     llm=LLM(model=os.getenv("MODEL"), callback=callback, verbose=True),

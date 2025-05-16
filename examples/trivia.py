@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from argo import Agent, LLM, Message, Context
+from argo import ChatAgent, LLM, Message, Context
 import dotenv
 import os
 import wikipedia
@@ -14,7 +14,7 @@ def callback(chunk: str):
     print(chunk, end="")
 
 
-agent = Agent(
+agent = ChatAgent(
     name="Trivial",
     description="A helpful assistant that can search Wikipedia for answering factual questions.",
     llm=LLM(model=os.getenv("MODEL"), callback=callback, verbose=True),

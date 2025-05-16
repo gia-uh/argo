@@ -4,7 +4,7 @@ from pydantic import BaseModel, create_model
 
 from argo.tools import Tool
 
-from .agent import Agent
+from .agent import ChatAgent
 from .llm import Message
 
 
@@ -26,7 +26,7 @@ class AgentDescription(BaseModel):
     tools: list[ToolDescription]
 
 
-def build(agent: Agent) -> FastAPI:
+def build(agent: ChatAgent) -> FastAPI:
     """
     Builds a FastAPI app from an agent.
 
@@ -84,7 +84,7 @@ def build_model(tool: Tool) -> type[BaseModel]:
     )
 
 
-def serve(agent: Agent, host:str="127.0.0.1", port:int=8000):
+def serve(agent: ChatAgent, host:str="127.0.0.1", port:int=8000):
     app = build(agent)
     import uvicorn
     uvicorn.run(app, host=host, port=port)

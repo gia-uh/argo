@@ -2,7 +2,7 @@ import json
 from typing import Any, Literal
 from pydantic import BaseModel, create_model
 
-from .agent import Agent
+from .agent import ChatAgent
 from .llm import Message
 from .prompts import *
 from .skills import Skill
@@ -38,7 +38,7 @@ class Engage(BaseModel):
 
 
 class Context:
-    def __init__(self, agent: Agent, messages: list[Message]):
+    def __init__(self, agent: ChatAgent, messages: list[Message]):
         self.agent = agent
         self._messages = messages
 
