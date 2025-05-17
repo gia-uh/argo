@@ -1,5 +1,6 @@
+import functools
 import inspect
-from typing import Any, Callable, Literal
+from typing import Any, Callable, Coroutine, Literal
 import rich
 import openai
 from pydantic import BaseModel
@@ -92,7 +93,7 @@ class LLM:
 
         return Message.assistant("".join(result))
 
-    async def parse[T: BaseModel](
+    async def create[T: BaseModel](
         self, model: type[T], messages: list[Message], **kwargs
     ) -> T:
         response = await self.client.beta.chat.completions.parse(
@@ -111,3 +112,26 @@ class LLM:
             raise ValueError("Failed to parse the response.")
 
         return result
+
+    def wrap(self, target):
+        llm_param = None
+        parameters = inspect.signature(target).parameters
+
+        for name, param in parameters.items():
+            if issubclass(param.annotation, LLM):
+                llm_param = name
+                break
+
+        if llm_param is None:
+            raise TypeError("LLM parameter not found.")
+
+        @functools.wraps(target)
+        async def wrapper(*args, **kwargs):
+            kwargs[llm_param] = self
+            return await target(*args, **kwargs)
+
+        # Remove the LLM param from wrapper so future
+        # introspection doesn't see this parameter
+        wrapper.__annotations__.pop(llm_param)
+
+        return wrapper

@@ -94,7 +94,7 @@ class Context:
             format=Choose.model_json_schema(),
         )
 
-        response = await self.agent.llm.parse(
+        response = await self.agent.llm.create(
             Choose, self._expand_content(*instructions, Message.system(prompt))
         )
 
@@ -111,7 +111,7 @@ class Context:
             format=Decide.model_json_schema(),
         )
 
-        response = await self.agent.llm.parse(
+        response = await self.agent.llm.create(
             Decide, self._expand_content(*instructions, Message.system(prompt))
         )
 
@@ -137,7 +137,7 @@ class Context:
             format=Equip.model_json_schema(),
         )
 
-        response = await self.agent.llm.parse(
+        response = await self.agent.llm.create(
             Equip, self._expand_content(*instructions, Message.system(prompt))
         )
 
@@ -160,7 +160,7 @@ class Context:
 
         messages = self._expand_content(*instructions, Message.system(prompt))
 
-        response = await self.agent.llm.parse(Engage, messages)
+        response = await self.agent.llm.create(Engage, messages)
         return skills_map[response.skill]
 
     async def invoke(
@@ -196,18 +196,16 @@ class Context:
 
         messages = self._expand_content(*instructions, Message.system(prompt))
 
-        response: BaseModel = await self.agent.llm.parse(
+        response: BaseModel = await self.agent.llm.create(
             model_cls, messages + [Message.system(prompt)]
         )
 
         try:
             result = await tool.run(**response.model_dump())
         except Exception as e:
-            if errors == 'handle':
+            if errors == "handle":
                 return ToolResult(
-                    tool=tool.name,
-                    description=tool.description,
-                    error=str(e)
+                    tool=tool.name, description=tool.description, error=str(e)
                 )
 
             raise
@@ -218,7 +216,9 @@ class Context:
             result=result,
         )
 
-    async def create[T: BaseModel](self, *instructions: str | Message, model: type[T]) -> T:
+    async def create[T: BaseModel](
+        self, *instructions: str | Message | BaseModel, model: type[T]
+    ) -> T:
         """
         Parses the given instructions into a model.
         This method will use the LLM to generate the parameters for the model.
@@ -226,16 +226,18 @@ class Context:
         messages = self._expand_content(*instructions)
         model_code = generate_pydantic_code(model)
 
-        messages.append(Message.system(
-            DEFAULT_CREATE_PROMPT.format(
-                type=model.__name__,
-                signature=model_code,
-                docs=model.__doc__ or "",
-                format=json.dumps(model.model_json_schema(), indent=2),
+        messages.append(
+            Message.system(
+                DEFAULT_CREATE_PROMPT.format(
+                    type=model.__name__,
+                    signature=model_code,
+                    docs=model.__doc__ or "",
+                    format=json.dumps(model.model_json_schema(), indent=2),
+                )
             )
-        ))
+        )
 
-        return await self.agent.llm.parse(model, messages)
+        return await self.agent.llm.create(model, messages)
 
     def add(self, *messages: Message | str | BaseModel) -> None:
         """

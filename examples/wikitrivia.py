@@ -38,9 +38,9 @@ class Reasoning(BaseModel):
     final: bool
 
 
-class Result(BaseModel):
-    query: str
+class Summary(BaseModel):
     summary: str
+    relevant: bool
 
 
 @agent.skill
@@ -69,36 +69,53 @@ async def question_answering(ctx: Context):
             Finally, provide a short, concise query for Wikipedia, if necessary.
             Otherwise, if the existing information is enough to answer, set final=True.
             """,
-            model=Reasoning
+            model=Reasoning,
         )
 
         ctx.add(reasoning)
 
         if reasoning.final:
-            return await ctx.reply()
+            yield await ctx.reply()
 
-        results = await ctx.invoke(search, errors='handle')
+        results = await ctx.invoke(search, errors="handle")
 
-        summary = await ctx.create(
-            """
-            Given the desired query, sumarize the fragment of content in the
-            following Wikipedia page that is related to the query.
-            Make the summary as concise as possible.
-            """,
-            results,
-            model=Result
-        )
-
-        ctx.add(summary)
+        ctx.add(results)
 
     yield await ctx.reply("Reply with the best available information in the context.")
 
 
 @agent.tool
-async def search(query: str) -> list[str]:
+async def search(query: str, llm: LLM) -> list[Summary]:
     """Search Wikipedia for information."""
     candidates = wikipedia.search(query, results=10)
-    return [wikipedia.summary(r) for r in candidates]
+
+    results = []
+
+    for title in candidates:
+        page = wikipedia.page(title)
+        summary = await llm.create(
+            messages=[
+                Message.system(
+                f"""
+                Given the following query, summarize the information
+                in the text to answer the query.
+
+                Query: {query}
+
+                Reply with a JSON object with the following fields:
+                - summary: A short summary of the information relevant to the query.
+                - relevant: A boolean indicating if the information is relevant to the query.
+                """
+                ),
+                Message.user(page.summary),
+            ],
+            model=Summary,
+        )
+
+        if summary.relevant:
+            results.append(summary)
+
+    return results
 
 
 loop(agent)

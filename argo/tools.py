@@ -1,5 +1,9 @@
 import inspect
 import abc
+import functools
+from typing import Callable, Coroutine
+
+from argo.llm import LLM
 
 
 class Tool:

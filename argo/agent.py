@@ -1,6 +1,6 @@
 import inspect
 import abc
-from typing import AsyncIterator, Protocol
+from typing import AsyncIterator, Callable, Protocol
 import runtime_generics
 
 from .llm import LLM, Message
@@ -128,6 +128,10 @@ class ChatAgent(Agentic):
         self._conversation.extend(messages)
 
     def skill(self, target):
+        """
+        Add a method as a skill to the agent.
+        The method must be an async generator.
+        """
         if isinstance(target, Skill):
             self._skills.append(target)
             return target
@@ -145,12 +149,34 @@ class ChatAgent(Agentic):
         return skill
 
     def tool(self, target):
+        """
+        Adds a method as a tool to the agent.
+
+        If the method expects an LLM at any keyword parameter, the
+        agent will automatically inject it.
+
+        The method must be an async function.
+        """
+
         if isinstance(target, Tool):
             self._tools.append(target)
             return target
 
+        if not callable(target):
+            raise ValueError("Tool must be a callable.")
+
+        if not inspect.iscoroutinefunction(target):
+            raise ValueError("Tool must be a coroutine function.")
+
         name = target.__name__
-        description = inspect.getdoc(target)
+        description = inspect.getdoc(target) or ""
+        signature = inspect.signature(target).parameters
+
+        # If the method expects an LLM, wrap it
+        # to inject the agent's LLM instance
+        if any(issubclass(param.annotation, LLM) for param in signature.values()):
+            target = self.llm.wrap(target)
+
         tool = MethodTool(name, description, target)
         self._tools.append(tool)
         return tool
