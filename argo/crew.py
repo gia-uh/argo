@@ -1,0 +1,99 @@
+import abc
+import asyncio
+import threading
+
+from pydantic import BaseModel
+from .agent import Agentic
+from .llm import Message
+
+
+class MessageBoard(abc.ABC):
+    """
+    Represents a message board.
+
+    Provides methods to listen to messages and post messages.
+    Messages are parameterized by type.
+    """
+
+    @abc.abstractmethod
+    async def get[T: BaseModel](self, message_type: type[T]) -> T:
+        pass
+
+    @abc.abstractmethod
+    async def post[T: BaseModel](self, message: T):
+        pass
+
+
+class SimpleMessageBoard(MessageBoard):
+    """
+    A simple in-memory message board that uses asyncio queues.
+    """
+
+    def __init__(self):
+        self.queues: dict[type, asyncio.Queue] = {}
+
+    async def get[T: BaseModel](self, message_type: type[T]) -> T:
+        if message_type not in self.queues:
+            self.queues[message_type] = asyncio.Queue()
+
+        return await self.queues[message_type].get()
+
+    async def post[T: BaseModel](self, message: T):
+        if type(message) not in self.queues:
+            self.queues[type(message)] = asyncio.Queue()
+
+        await self.queues[type(message)].put(message)
+
+
+class Crew:
+    """
+    Represents a crew of agents.
+
+    Each agent will be run asynchronously and will listen to messages of a specific type
+    (as declared by the `Agentic` protocol).
+
+    The crew will post messages to the message board that will be automatically
+    picked up by the right agent if such agent exists.
+    """
+
+    def __init__(self, board: MessageBoard, agents: list[Agentic]):
+        self.agents = agents
+        self.board = board
+
+    async def loop(self):
+        """
+        Starts the crew loop.
+
+        This method blocks in the current thread and must be called
+        from an async context.
+
+        Use `start()` if you want to run the loop in a background thread.
+        """
+        try:
+            await asyncio.gather(*[self._loop_agent(agent) for agent in self.agents])
+        except KeyboardInterrupt:
+            pass
+
+    def start(self) -> threading.Thread:
+        """
+        Runs `loop()` in a background async thread and returns the thread.
+        """
+        def run():
+            asyncio.run(self.loop())
+
+        thread = threading.Thread(target=run, name="Crew Loop")
+        thread.start()
+
+        return thread
+
+    async def _loop_agent(self, agent: Agentic):
+        """
+        Starts the loop for a single agent.
+        """
+        in_t, out_t = agent.types
+
+        while True:
+            m = await self.board.get(in_t)
+
+            async for m in agent.perform(Message.system(m)):
+                await self.board.post(m.content)

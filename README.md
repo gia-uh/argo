@@ -120,7 +120,7 @@ The following are programatic (code-based) examples:
 - [Hello World](examples/hello_world.py): The barebones chat app with no extra skills.
 - [Coder](examples/coder.py): A simple agent that can aswer math questions with a code interpreter.
 - [Banker](examples/banker.py): A simple agent that can manage a (simulated) bank account.
-- [Trivia](examples/trivia.py): An agent that can answer factual, multi-hop questions from Wikipedia, using the ReAct paradigm.
+- [WikiTrivia](examples/wikitrivia.py): An agent that can answer factual, multi-hop questions from Wikipedia, using the ReAct paradigm.
 
 The following are declarative (YAML-based) examples:
 
