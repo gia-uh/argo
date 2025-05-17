@@ -2,7 +2,6 @@ import abc
 import asyncio
 import threading
 
-from pydantic import BaseModel
 from .agent import Agentic
 from .llm import Message
 
@@ -16,11 +15,11 @@ class MessageBoard(abc.ABC):
     """
 
     @abc.abstractmethod
-    async def get[T: BaseModel](self, message_type: type[T]) -> T:
+    async def get[T](self, message_type: type[T]) -> T:
         pass
 
     @abc.abstractmethod
-    async def post[T: BaseModel](self, message: T):
+    async def post[T](self, message: T):
         pass
 
 
@@ -32,13 +31,13 @@ class SimpleMessageBoard(MessageBoard):
     def __init__(self):
         self.queues: dict[type, asyncio.Queue] = {}
 
-    async def get[T: BaseModel](self, message_type: type[T]) -> T:
+    async def get[T](self, message_type: type[T]) -> T:
         if message_type not in self.queues:
             self.queues[message_type] = asyncio.Queue()
 
         return await self.queues[message_type].get()
 
-    async def post[T: BaseModel](self, message: T):
+    async def post[T](self, message: T):
         if type(message) not in self.queues:
             self.queues[type(message)] = asyncio.Queue()
 

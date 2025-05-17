@@ -1,6 +1,6 @@
 import inspect
 import abc
-from typing import AsyncIterator, Callable, Protocol
+from typing import AsyncIterator, Protocol
 import runtime_generics
 
 from .llm import LLM, Message
