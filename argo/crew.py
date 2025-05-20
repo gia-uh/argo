@@ -73,17 +73,11 @@ class Crew:
         except KeyboardInterrupt:
             pass
 
-    def start(self) -> threading.Thread:
+    def start(self):
         """
-        Runs `loop()` in a background async thread and returns the thread.
+        Runs `loop()` as a background async task and returns the task.
         """
-        def run():
-            asyncio.run(self.loop())
-
-        thread = threading.Thread(target=run, name="Crew Loop")
-        thread.start()
-
-        return thread
+        return asyncio.create_task(self.loop())
 
     async def _loop_agent(self, agent: Agentic):
         """

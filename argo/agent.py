@@ -32,17 +32,13 @@ class Agentic(Protocol):
 
 @runtime_generics.runtime_generic
 class AgentBase[In, Out](Agentic):
-    def __init__(self, name: str, description: str):
-        self._name = name
-        self._description = description
-
     @property
     def name(self):
-        return self._name
+        return self.__class__.__name__
 
     @property
     def description(self):
-        return self._description
+        return self.__class__.__doc__ or ""
 
     @property
     def types(self):
@@ -51,7 +47,6 @@ class AgentBase[In, Out](Agentic):
 
     async def perform(self, input: Message) -> AsyncIterator[Message]:
         in_t, _ = self.types
-
         data: In = input.unpack(in_t)
 
         async for m in self.process(data):
@@ -70,7 +65,9 @@ class ChatAgent(Agentic):
         llm: LLM,
         *,
         system_prompt=DEFAULT_SYSTEM_PROMPT,
-        persistent:bool=True
+        persistent:bool=True,
+        skills: list | None = None,
+        tools: list | None = None
     ):
         self._name = name
         self._description = description
@@ -80,6 +77,13 @@ class ChatAgent(Agentic):
         self._system_prompt = system_prompt.format(name=name, description=description)
         self._conversation = [Message.system(self._system_prompt)]
         self._persistent = persistent
+
+        # initialize predefined skills and tools
+        for skill in skills or []:
+            self.skill(skill)
+
+        for tool in tools or []:
+            self.tool(tool)
 
     @property
     def persistent(self):

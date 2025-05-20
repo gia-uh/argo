@@ -1,7 +1,8 @@
 import abc
+
 from .llm import Message
-from typing import AsyncIterator, Generator
-from pydantic import BaseModel
+from typing import AsyncIterator
+
 
 
 class Skill:
@@ -30,3 +31,10 @@ class MethodSkill(Skill):
     async def execute(self, ctx): # type: ignore
         async for m in self._target(ctx):
             yield m
+
+
+async def chat(ctx: "Context"):
+    """
+    Casual chat with the user.
+    """
+    yield await ctx.reply()

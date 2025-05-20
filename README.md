@@ -34,34 +34,28 @@ Here is a quick hello world example that sets up a basic chat agent with no fanc
 We assume you have the relevant environment variables `API_KEY`, `BASE_URL` and `MODEL` exported.
 
 ```python
-from argo import Agent, LLM, Message, Context
+from argo import ChatAgent, LLM
 from argo.cli import loop
+from argo.skills import chat
 import dotenv
 import os
 
 # load environment variables
 dotenv.load_dotenv()
 
-# set a basic callback to print LLM respondes to terminal
+# define callback to print chunks to console
 def callback(chunk:str):
     print(chunk, end="")
 
-# initialize the agent
-agent = Agent(
+# instantiate the agent
+agent = ChatAgent(
     name="Agent",
     description="A helpful assistant.",
-    llm=LLM(model=os.getenv("MODEL"), callback=callback),
+    llm=LLM(model=os.getenv("MODEL"), callback=callback, verbose=False),
+    skills=[chat], # add a predefined chat skill
 )
 
-# basic skill that just replies to user messages
-# notice skills *must* be async methods for now
-@agent.skill
-async def chat(ctx: Context) -> Message:
-    """Casual chat with the user.
-    """
-    return await ctx.reply()
-
-# this sets up the chat history and conversation loop
+# start CLI loop
 loop(agent)
 ```
 

@@ -5,9 +5,9 @@ from pydantic import BaseModel, create_model
 from .agent import ChatAgent
 from .llm import Message
 from .prompts import *
+from .utils import generate_pydantic_code
 from .skills import Skill
 from .tools import Tool
-from .utils import generate_pydantic_code
 
 
 class Choose(BaseModel):
