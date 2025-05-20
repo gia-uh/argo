@@ -1,7 +1,6 @@
 import inspect
 import abc
 from typing import AsyncIterator, Protocol
-import runtime_generics
 
 from .llm import LLM, Message
 from .prompts import DEFAULT_SYSTEM_PROMPT
@@ -30,7 +29,6 @@ class Agentic(Protocol):
         pass
 
 
-@runtime_generics.runtime_generic
 class AgentBase[In, Out](Agentic):
     @property
     def name(self):
@@ -42,8 +40,7 @@ class AgentBase[In, Out](Agentic):
 
     @property
     def types(self):
-        in_t, out_t = runtime_generics.get_type_arguments(self)
-        return (in_t, out_t)
+        return self.__class__.__orig_bases__[0].__args__ # type: ignore
 
     async def perform(self, input: Message) -> AsyncIterator[Message]:
         in_t, _ = self.types

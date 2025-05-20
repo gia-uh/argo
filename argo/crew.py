@@ -23,7 +23,7 @@ class MessageBoard(abc.ABC):
         pass
 
 
-class SimpleMessageBoard(MessageBoard):
+class MemoryBoard(MessageBoard):
     """
     A simple in-memory message board that uses asyncio queues.
     """
@@ -55,9 +55,11 @@ class Crew:
     picked up by the right agent if such agent exists.
     """
 
-    def __init__(self, board: MessageBoard, agents: list[Agentic]):
+    def __init__(self, board: MessageBoard, agents: list[Agentic], seed:list=None):
         self.agents = agents
         self.board = board
+        self.seed = seed or []
+
 
     async def loop(self):
         """
@@ -68,6 +70,9 @@ class Crew:
 
         Use `start()` if you want to run the loop in a background thread.
         """
+        for item in self.seed:
+            await self.board.post(item)
+
         try:
             await asyncio.gather(*[self._loop_agent(agent) for agent in self.agents])
         except KeyboardInterrupt:
@@ -90,3 +95,9 @@ class Crew:
 
             async for m in agent.perform(Message.system(m)):
                 await self.board.post(m.content)
+
+    def run(self):
+        """
+        Blocks the current thread until the crew loop is stopped.
+        """
+        asyncio.run(self.loop())

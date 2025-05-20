@@ -115,6 +115,7 @@ The following are programatic (code-based) examples:
 - [Coder](examples/coder.py): A simple agent that can aswer math questions with a code interpreter.
 - [Banker](examples/banker.py): A simple agent that can manage a (simulated) bank account.
 - [WikiTrivia](examples/wikitrivia.py): An agent that can answer factual, multi-hop questions from Wikipedia, using the ReAct paradigm.
+- [Mail](examples/email.py): A collection of agents that simulate fetching emails, summarizing and categorizing, and creating aggregated reports, all working autonomously using the Crew framework to coordinate.
 
 The following are declarative (YAML-based) examples:
 
