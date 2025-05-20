@@ -1,4 +1,4 @@
-from argo import Agent, LLM, Message, Context
+from argo import ChatAgent, LLM, Message, Context
 import dotenv
 import os
 
@@ -32,7 +32,7 @@ def callback(chunk: str):
     print(chunk, end="")
 
 
-agent = Agent(
+agent = ChatAgent(
     name="Banker",
     description="A helpful assistant that can execute bank transactions and reply with the account information.",
     llm=LLM(model=os.getenv("MODEL"), callback=callback, verbose=True),
@@ -41,17 +41,17 @@ agent = Agent(
 
 # Add a basic chat skill
 @agent.skill
-async def casual_chat(ctx: Context) -> Message:
+async def casual_chat(ctx: Context):
     """Casual chat with the user.
 
     Use this skill when the user asks a general question or engages
     in casual chat.
     """
-    return await ctx.reply()
+    yield await ctx.reply()
 
 
 @agent.skill
-async def banker(ctx: Context) -> Message:
+async def banker(ctx: Context):
     """Interact with the bank account.
 
     Use this skill when the user asks for information about the bank account,
@@ -59,7 +59,7 @@ async def banker(ctx: Context) -> Message:
     """
     tool = await ctx.equip()
     result = await ctx.invoke(tool)
-    return await ctx.reply(Message.tool(result))
+    yield await ctx.reply(Message.tool(result))
 
 
 @agent.tool

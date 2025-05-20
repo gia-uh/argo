@@ -1,46 +1,62 @@
+import functools
 import inspect
-from typing import Callable, Type, TypeVar
+from typing import Any, Callable, Coroutine, Literal
 import rich
-import json
 import openai
 from pydantic import BaseModel
 import os
 
+from openai.types.chat import ChatCompletionMessageParam
+
 
 class Message(BaseModel):
-    role: str
-    content: str
+    role: Literal["user", "system", "assistant", "tool"]
+    content: Any
 
     @classmethod
-    def system(cls, content: str) -> "Message":
+    def system(cls, content: Any) -> "Message":
         return cls(role="system", content=content)
 
     @classmethod
-    def user(cls, content: str) -> "Message":
+    def user(cls, content: Any) -> "Message":
         return cls(role="user", content=content)
 
     @classmethod
-    def assistant(cls, content: str) -> "Message":
+    def assistant(cls, content: Any) -> "Message":
         return cls(role="assistant", content=content)
 
     @classmethod
-    def tool(cls, content: BaseModel) -> "Message":
-        return cls(role="tool", content=content.model_dump_json())
+    def tool(cls, content: Any) -> "Message":
+        return cls(role="tool", content=content)
 
+    def dump(self) -> ChatCompletionMessageParam:
+        return dict(  # type: ignore
+            role=self.role,
+            content=(
+                self.content.model_dump_json()
+                if isinstance(self.content, BaseModel)
+                else str(self.content)
+            ),
+        )
 
-T = TypeVar("T", bound=BaseModel)
+    def unpack[T: BaseModel](self, t: type[T]) -> T:
+        if isinstance(self.content, t):
+            return self.content
 
-LLMCallback = Callable[[str], None]
+        if isinstance(self.content, str):
+            return t.model_validate_json(self.content)
+
+        raise TypeError(f"Cannot unpack {self.content} into {t}")
 
 
 class LLM:
     def __init__(
         self,
         model: str,
-        callback: LLMCallback = None,
+        callback: Callable[[str], None] | None = None,
         verbose: bool = False,
-        base_url: str = None,
-        api_key: str = None,
+        base_url: str | None = None,
+        api_key: str | None = None,
     ):
         self.model = model
         self.verbose = verbose
@@ -58,7 +74,7 @@ class LLM:
 
         async for chunk in await self.client.chat.completions.create(
             model=self.model,
-            messages=[message.model_dump() for message in messages],
+            messages=[message.dump() for message in messages],
             stream=True,
             **kwargs,
         ):
@@ -77,10 +93,12 @@ class LLM:
 
         return Message.assistant("".join(result))
 
-    async def parse(self, model: Type[T], messages: list[Message], **kwargs) -> T:
+    async def create[T: BaseModel](
+        self, model: type[T], messages: list[Message], **kwargs
+    ) -> T:
         response = await self.client.beta.chat.completions.parse(
             model=self.model,
-            messages=[message.model_dump() for message in messages],
+            messages=[message.dump() for message in messages],
             response_format=model,
             **kwargs,
         )
@@ -90,4 +108,30 @@ class LLM:
         if self.verbose:
             rich.print(result)
 
+        if result is None:
+            raise ValueError("Failed to parse the response.")
+
         return result
+
+    def wrap(self, target):
+        llm_param = None
+        parameters = inspect.signature(target).parameters
+
+        for name, param in parameters.items():
+            if issubclass(param.annotation, LLM):
+                llm_param = name
+                break
+
+        if llm_param is None:
+            raise TypeError("LLM parameter not found.")
+
+        @functools.wraps(target)
+        async def wrapper(*args, **kwargs):
+            kwargs[llm_param] = self
+            return await target(*args, **kwargs)
+
+        # Remove the LLM param from wrapper so future
+        # introspection doesn't see this parameter
+        wrapper.__annotations__.pop(llm_param)
+
+        return wrapper

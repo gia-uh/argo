@@ -34,34 +34,28 @@ Here is a quick hello world example that sets up a basic chat agent with no fanc
 We assume you have the relevant environment variables `API_KEY`, `BASE_URL` and `MODEL` exported.
 
 ```python
-from argo import Agent, LLM, Message, Context
+from argo import ChatAgent, LLM
 from argo.cli import loop
+from argo.skills import chat
 import dotenv
 import os
 
 # load environment variables
 dotenv.load_dotenv()
 
-# set a basic callback to print LLM respondes to terminal
+# define callback to print chunks to console
 def callback(chunk:str):
     print(chunk, end="")
 
-# initialize the agent
-agent = Agent(
+# instantiate the agent
+agent = ChatAgent(
     name="Agent",
     description="A helpful assistant.",
-    llm=LLM(model=os.getenv("MODEL"), callback=callback),
+    llm=LLM(model=os.getenv("MODEL"), callback=callback, verbose=False),
+    skills=[chat], # add a predefined chat skill
 )
 
-# basic skill that just replies to user messages
-# notice skills *must* be async methods for now
-@agent.skill
-async def chat(ctx: Context) -> Message:
-    """Casual chat with the user.
-    """
-    return await ctx.reply()
-
-# this sets up the chat history and conversation loop
+# start CLI loop
 loop(agent)
 ```
 
@@ -87,7 +81,7 @@ argo <path/to/config.yaml>
 
 Check the [examples](examples) folder for more detailed examples.
 
-### Integrated server
+### Integrated API
 
 If you install with the `server` extra (e.g., `pip install argo[server]`),
 then you'll have the `argo serve` command available, that spins up a minimalistic FastAPI
@@ -98,6 +92,18 @@ This is not meant to be a production-ready REST server, it doesn't handle conver
 context automatically (meaning you need to mantain and pass the whole conversation in each request)
 and it currently doesn't support streaming mode.
 
+### Multi-Agent Systems
+
+Building on top of the Agent abstraction, **ARGO** proposes a multi-agent architecture based on a typed message board. A `System` instance is a collection of agents that can communicate with each other by posting messages to a message board. The message board is typed, and agents respond to messages of the right types, and place their responses back in the same board.
+
+This allows building complex multi-agent systems where tasks are automatically split, delegated, and coordinated among agents, with very loose coupling, as no agent needs to know the implementation details (or even the existence of) other agents.
+
+The multi-agent system implements the `Agentic` protocol so it can be used as a single agent in another system, or fired up as a CLI or FastAPi-enabled web service.
+
+Since **ARGO** aims to be a lightweight framework, by default it provides a development-friendly message board that is synchronous and in-memory. However, it is easy to implement a message board that is asynchronous and distributed, or that persists messages to a database, or that uses a message broker, or any other implementation that fits your needs.
+
+In the examples, we provide a simple implementation of a message board that uses Redis a message broker and persistence backend.
+
 ## Documentation
 
 Documentation is still under construction. However, you can check the examples for a quick start.
@@ -107,7 +113,8 @@ The following are programatic (code-based) examples:
 - [Hello World](examples/hello_world.py): The barebones chat app with no extra skills.
 - [Coder](examples/coder.py): A simple agent that can aswer math questions with a code interpreter.
 - [Banker](examples/banker.py): A simple agent that can manage a (simulated) bank account.
-- [Trivia](examples/trivia.py): An agent that can answer factual, multi-hop questions from Wikipedia, using the ReAct paradigm.
+- [WikiTrivia](examples/wikitrivia.py): An agent that can answer factual, multi-hop questions from Wikipedia, using the ReAct paradigm.
+- [Mail](examples/email.py): A collection of agents that simulate fetching emails, summarizing and categorizing, and creating aggregated reports, all working autonomously using the Crew framework to coordinate.
 
 The following are declarative (YAML-based) examples:
 
@@ -145,6 +152,14 @@ Tools encapsulate external functionality such as calling APIs, running code or c
 
 A very important concept in **ARGO** is the conversation context. This object encapsulates the list of messages available in the current iteration of the conversation, and provides all the methods to interact with the language model intelligently. Furthermore, the context keeps track of where we are in the conversation flow.
 
+#### Crew
+
+A crew is a collection of agents that communicate via an asynchronous message board. **ARGO** provides a simple message board implemented using memory-based async queues, which is production-ready for small loads in single host setups.
+
+Agents in a crew process messages defined via input/output types. The `Crew` class takes care of distributing each message to the correct agent, so no agent needs to be aware of the existence of other agents. This allows creating fully autonomous multi-agent systems that collaborate in a loosely coupled way.
+
+You can seamlesly combine conversation agents, non-conversation but LLM-based agents to do batch processing or other tasks, and even non-LLM-based agents to perform tasks that do not require language processing, such as fetching data from servers or running backend tasks.
+
 ### Training Mode (under development)
 
 A unique feature of **ARGO** is the capability to "train" agents to become better at solving specific problems. Traditionally, the cheap way to "train" LLM agents is to provide them with a set of examples of how they should behave. But crafting specific examples for each problem is time-consuming and error-prone.
@@ -165,10 +180,17 @@ The result of a training session is a collection of structured examples that can
 - Add tool definition via YAML and REST endpoints.
 - Add streaming mode for server.
 - Add support for skill composition.
-- Add support for multi-agent collaboration and delegation.
 - Add training mode.
 
 ## Changelog
+
+### 0.3.0
+
+⭐ Agent coordination is here!
+
+- Add `Crew` and `MessageBoard`.
+- Implement simple messaging board using async queues.
+- Add example of coordination (email agents).
 
 ### 0.2.4
 

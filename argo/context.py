@@ -1,14 +1,13 @@
 import json
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal
 from pydantic import BaseModel, create_model
-import rich
 
-from .agent import Agent
+from .agent import ChatAgent
 from .llm import Message
 from .prompts import *
+from .utils import generate_pydantic_code
 from .skills import Skill
 from .tools import Tool
-from .utils import generate_pydantic_code
 
 
 class Choose(BaseModel):
@@ -38,12 +37,8 @@ class Engage(BaseModel):
     skill: str
 
 
-T = TypeVar("T")
-TModel = TypeVar("TModel", bound=BaseModel)
-
-
 class Context:
-    def __init__(self, agent: Agent, messages: list[Message]):
+    def __init__(self, agent: ChatAgent, messages: list[Message]):
         self.agent = agent
         self._messages = messages
 
@@ -57,7 +52,7 @@ class Context:
         elif isinstance(message, str):
             return Message.system(message)
         elif isinstance(message, BaseModel):
-            return Message.tool(message)
+            return Message.tool(message.model_dump_json())
 
         raise TypeError(f"Invalid message type: {type(message)}")
 
@@ -85,7 +80,7 @@ class Context:
 
         return result
 
-    async def choose(self, options: list[T], *instructions: str | Message) -> T:
+    async def choose[T](self, options: list[T], *instructions: str | Message) -> T:
         """Choose one option out of many.
 
         This method will use the LLM to choose one option out of many.
@@ -99,7 +94,7 @@ class Context:
             format=Choose.model_json_schema(),
         )
 
-        response = await self.agent.llm.parse(
+        response = await self.agent.llm.create(
             Choose, self._expand_content(*instructions, Message.system(prompt))
         )
 
@@ -116,14 +111,14 @@ class Context:
             format=Decide.model_json_schema(),
         )
 
-        response = await self.agent.llm.parse(
+        response = await self.agent.llm.create(
             Decide, self._expand_content(*instructions, Message.system(prompt))
         )
 
         return response.answer
 
     async def equip(
-        self, *instructions: str | Message, tools: list[Tool] = None
+        self, *instructions: str | Message, tools: list[Tool] | None = None
     ) -> Tool:
         """Selects one and exactly one tool.
 
@@ -142,11 +137,11 @@ class Context:
             format=Equip.model_json_schema(),
         )
 
-        response = await self.agent.llm.parse(
+        response = await self.agent.llm.create(
             Equip, self._expand_content(*instructions, Message.system(prompt))
         )
 
-        return mapping[response.selection]
+        return mapping[response.tool]
 
     async def engage(self, *instructions: str | Message) -> Skill:
         """
@@ -165,12 +160,12 @@ class Context:
 
         messages = self._expand_content(*instructions, Message.system(prompt))
 
-        response = await self.agent.llm.parse(Engage, messages)
+        response = await self.agent.llm.create(Engage, messages)
         return skills_map[response.skill]
 
     async def invoke(
         self,
-        tool: Tool = None,
+        tool: Tool | None = None,
         *instructions: str | Message,
         errors: Literal["raise", "handle"] = "raise",
         **kwargs,
@@ -181,9 +176,9 @@ class Context:
         The tool will then be invoked with the generated parameters.
         """
         if tool is None:
-            tool = await self.equip(instructions)
+            tool = await self.equip(*instructions)
 
-        parameters = tool.parameters()
+        parameters: dict[str, Any] = tool.parameters()
 
         for k, v in kwargs.items():
             parameters[k] = (parameters[k], v)
@@ -201,18 +196,16 @@ class Context:
 
         messages = self._expand_content(*instructions, Message.system(prompt))
 
-        response: BaseModel = await self.agent.llm.parse(
+        response: BaseModel = await self.agent.llm.create(
             model_cls, messages + [Message.system(prompt)]
         )
 
         try:
             result = await tool.run(**response.model_dump())
         except Exception as e:
-            if errors == 'handle':
+            if errors == "handle":
                 return ToolResult(
-                    tool=tool.name,
-                    description=tool.description,
-                    error=str(e)
+                    tool=tool.name, description=tool.description, error=str(e)
                 )
 
             raise
@@ -223,7 +216,9 @@ class Context:
             result=result,
         )
 
-    async def create(self, *instructions: str | Message, model: type[TModel]) -> TModel:
+    async def create[T: BaseModel](
+        self, *instructions: str | Message | BaseModel, model: type[T]
+    ) -> T:
         """
         Parses the given instructions into a model.
         This method will use the LLM to generate the parameters for the model.
@@ -231,16 +226,18 @@ class Context:
         messages = self._expand_content(*instructions)
         model_code = generate_pydantic_code(model)
 
-        messages.append(Message.system(
-            DEFAULT_CREATE_PROMPT.format(
-                type=model.__name__,
-                signature=model_code,
-                docs=model.__doc__ or "",
-                format=json.dumps(model.model_json_schema(), indent=2),
+        messages.append(
+            Message.system(
+                DEFAULT_CREATE_PROMPT.format(
+                    type=model.__name__,
+                    signature=model_code,
+                    docs=model.__doc__ or "",
+                    format=json.dumps(model.model_json_schema(), indent=2),
+                )
             )
-        ))
+        )
 
-        return await self.agent.llm.parse(model, messages)
+        return await self.agent.llm.create(model, messages)
 
     def add(self, *messages: Message | str | BaseModel) -> None:
         """
@@ -248,3 +245,9 @@ class Context:
         """
         for message in messages:
             self._messages.append(self._wrap(message))
+
+    def pop(self) -> Message:
+        """
+        Pops the last message from the context.
+        """
+        return self._messages.pop()

@@ -1,4 +1,4 @@
-from argo import Agent, LLM, Message, Context
+from argo import ChatAgent, LLM, Message, Context
 import dotenv
 import os
 import rich
@@ -12,7 +12,7 @@ def callback(chunk: str):
     print(chunk, end="")
 
 
-agent = Agent(
+agent = ChatAgent(
     name="Coder",
     description="A helpful assistant that can write and run Python code.",
     llm=LLM(model=os.getenv("MODEL"), callback=callback),
@@ -20,17 +20,17 @@ agent = Agent(
 
 
 @agent.skill
-async def code(ctx: Context) -> str:
+async def code(ctx: Context):
     """Use Python to compute math operations.
 
     Use this skill when you need to compute some math operations.
     """
     result = await ctx.invoke(interpreter)
-    return await ctx.reply(f"Result={result}.\n\nReply to the user.")
+    yield await ctx.reply(f"Result={result}.\n\nReply to the user.")
 
 
 @agent.tool
-async def interpreter(code: str) -> str:
+async def interpreter(code: str):
     """Run Python code and returns a final value.
 
     The code should compute and store the result

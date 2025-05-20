@@ -1,7 +1,4 @@
-name: "Casual"
+name: "Agent"
 description: "An agent that performs only casual chat."
 skills:
-  - name: "chat"
-    description: "Casual chat with the user."
-    steps:
-      - reply:
+  - chat

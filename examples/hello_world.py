@@ -1,5 +1,6 @@
-from argo import Agent, LLM, Message, Context
+from argo import ChatAgent, LLM
 from argo.cli import loop
+from argo.skills import chat
 import dotenv
 import os
 
@@ -11,18 +12,13 @@ def callback(chunk:str):
     print(chunk, end="")
 
 
-agent = Agent(
+agent = ChatAgent(
     name="Agent",
     description="A helpful assistant.",
-    llm=LLM(model=os.getenv("MODEL"), callback=callback, verbose=True),
+    llm=LLM(model=os.getenv("MODEL"), callback=callback, verbose=False),
+    skills=[chat],
+
 )
-
-
-@agent.skill
-async def chat(ctx: Context) -> Message:
-    """Casual chat with the user.
-    """
-    return await ctx.reply()
 
 
 loop(agent)

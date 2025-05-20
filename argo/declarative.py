@@ -4,11 +4,16 @@ import yaml
 
 from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, model_validator
 
-from .agent import Agent
-from .skills import Skill
+from .agent import ChatAgent
+from .skills import Skill, chat
 from .tools import Tool
 from .llm import LLM, Message
 from .context import Context
+
+
+PREDEFINED_SKILLS = {
+    "chat": chat
+}
 
 
 class ToolConfig(BaseModel):
@@ -184,12 +189,15 @@ class StepList(
         steps = [s.compile() for s in self.root]
 
         async def step_list(ctx: Context) -> Message:
-            m: Message = None
+            m: Message | None = None
             messages = ctx.messages
 
             for step in steps:
                 m = await step(ctx)
                 messages.append(m)
+
+            if m is None:
+                raise ValueError("No message returned from steps")
 
             return m
 
@@ -219,13 +227,18 @@ class AgentConfig(BaseModel):
     description: str
 
     tools: list[ToolConfig] = Field(default_factory=list)
-    skills: list[SkillConfig]
+    skills: list[SkillConfig | str]
 
-    def compile(self, llm: LLM) -> Agent:
-        agent = Agent(name=self.name, description=self.description, llm=llm)
+    def compile(self, llm: LLM) -> ChatAgent:
+        agent = ChatAgent(name=self.name, description=self.description, llm=llm)
 
-        for skill in self.skills:
-            agent.skill(skill.compile())
+        for s in self.skills:
+            if isinstance(s, str):
+                skill = PREDEFINED_SKILLS[s]
+            else:
+                skill = s.compile()
+
+            agent.skill(skill)
 
         return agent
 
@@ -250,4 +263,4 @@ def parse(path) -> AgentConfig:
     with open(path) as fp:
         config = yaml.safe_load(fp)
         config = _fix_dumb_yes_no(config)
-        return AgentConfig(**config)
+        return AgentConfig(**config) # type: ignore
