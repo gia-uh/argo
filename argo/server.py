@@ -68,7 +68,7 @@ def build(agent: ChatAgent) -> FastAPI:
         model_cls = build_model(tool)
 
         @app.post(f"/{tool.name}", response_model=model_cls)
-        async def tool(params: model_cls) -> dict: # type: ignore
+        async def invoke_tool(params: model_cls) -> dict:
             return await tool.run(**params.dict())
 
     return app

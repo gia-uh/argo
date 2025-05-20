@@ -66,9 +66,6 @@ def run(
     """
     Run an agent defined in a YAML file with a basic CLI loop.
     """
-    dotenv.load_dotenv()
-    import os
-
     def callback(chunk: str):
         print(chunk, end="")
 
@@ -94,19 +91,14 @@ def serve(
     host: str = Option("127.0.0.1", "--host", "-h", help="Host IP to bind to."),
     port: int = Option(8000, "--port", "-p", help="Port to bind to."),
 ):
-    "Start the FastAPI server to run an agent in API-mode."
+    """
+    Start a FastAPI server to run an agent in API-mode.
+    """
     try:
         from .server import serve as serve_loop
     except ImportError:
         print("Please install argo[server] to use this command.")
         raise Exit(1)
-
-    dotenv.load_dotenv()
-    import os
-
-    API_KEY = os.getenv("API_KEY")
-    BASE_URL = os.getenv("BASE_URL")
-    MODEL = os.getenv("MODEL")
 
     llm = LLM(model=model, api_key=api_key, base_url=base_url)
 
