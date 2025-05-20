@@ -92,14 +92,13 @@ This is not meant to be a production-ready REST server, it doesn't handle conver
 context automatically (meaning you need to mantain and pass the whole conversation in each request)
 and it currently doesn't support streaming mode.
 
-
 ### Multi-Agent Systems
 
 Building on top of the Agent abstraction, **ARGO** proposes a multi-agent architecture based on a typed message board. A `System` instance is a collection of agents that can communicate with each other by posting messages to a message board. The message board is typed, and agents respond to messages of the right types, and place their responses back in the same board.
 
 This allows building complex multi-agent systems where tasks are automatically split, delegated, and coordinated among agents, with very loose coupling, as no agent needs to know the implementation details (or even the existence of) other agents.
 
-The multi-agent system implements the `Agent` protocol so it can be used as a single agent in another system, or fired up as a CLI or FastAPi-enabled web service.
+The multi-agent system implements the `Agentic` protocol so it can be used as a single agent in another system, or fired up as a CLI or FastAPi-enabled web service.
 
 Since **ARGO** aims to be a lightweight framework, by default it provides a development-friendly message board that is synchronous and in-memory. However, it is easy to implement a message board that is asynchronous and distributed, or that persists messages to a database, or that uses a message broker, or any other implementation that fits your needs.
 
@@ -153,6 +152,13 @@ Tools encapsulate external functionality such as calling APIs, running code or c
 
 A very important concept in **ARGO** is the conversation context. This object encapsulates the list of messages available in the current iteration of the conversation, and provides all the methods to interact with the language model intelligently. Furthermore, the context keeps track of where we are in the conversation flow.
 
+#### Crew
+
+A crew is a collection of agents that communicate via an asynchronous message board. **ARGO** provides a simple message board implemented using memory-based async queues, which is production-ready for small loads in single host setups.
+
+Agents in a crew process messages defined via input/output types. The `Crew` class takes care of distributing each message to the correct agent, so no agent needs to be aware of the existence of other agents. This allows creating fully autonomous multi-agent systems that collaborate in a loosely coupled way.
+
+You can seamlesly combine conversation agents, non-conversation but LLM-based agents to do batch processing or other tasks, and even non-LLM-based agents to perform tasks that do not require language processing, such as fetching data from servers or running backend tasks.
 
 ### Training Mode (under development)
 
@@ -174,10 +180,17 @@ The result of a training session is a collection of structured examples that can
 - Add tool definition via YAML and REST endpoints.
 - Add streaming mode for server.
 - Add support for skill composition.
-- Add support for multi-agent collaboration and delegation.
 - Add training mode.
 
 ## Changelog
+
+### 0.3.0
+
+⭐ Agent coordination is here!
+
+- Add `Crew` and `MessageBoard`.
+- Implement simple messaging board using async queues.
+- Add example of coordination (email agents).
 
 ### 0.2.4
 
