@@ -67,16 +67,13 @@ The same behavior can be achieved with a simpler declarative interface that uses
 name: "Casual"
 description: "An agent that performs only casual chat."
 skills:
-  - name: "chat"
-    description: "Casual chat with the user."
-    steps:
-      - reply:
+  - chat
 ```
 
 You can run the above configuration with the `argo` command.
 
 ```bash
-argo <path/to/config.yaml>
+argo run <path/to/config.yaml>
 ```
 
 Check the [examples](examples) folder for more detailed examples.
@@ -87,6 +84,10 @@ If you install with the `server` extra (e.g., `pip install argo[server]`),
 then you'll have the `argo serve` command available, that spins up a minimalistic FastAPI
 server for your agent. This is useful for integrating with other services, or for building
 a web-based interface for your agent.
+
+```
+argo serve <path/to/config.yaml>
+```
 
 This is not meant to be a production-ready REST server, it doesn't handle conversation
 context automatically (meaning you need to mantain and pass the whole conversation in each request)
