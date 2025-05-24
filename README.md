@@ -4,6 +4,8 @@
 
 **ARGO** - *Agent-based Reasoning, Governance, and Orchestration* - is a Python framework for building powerful, collaborative multi-agent systems powered by large language models (LLMs) and other AI components. Inspired by the legendary ship Argo that carried the Argonauts on their epic quest, ARGO unites diverse intelligent agents to reason, govern, and orchestrate complex workflows together.
 
+If you want to know more about the philosophy and design principles behind ARGO, read [Towards Reliable, Consistent, and Safe LLM-based Agents](https://blog.apiad.net/p/towards-reliable-consistent-and-safe).
+
 > NOTE: **ARGO** is a work in progress. The current state is a proof of concept and is not yet ready for production use.
 
 ## Overview
