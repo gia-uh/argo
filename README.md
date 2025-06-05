@@ -177,6 +177,14 @@ When the agent deviates from the intended behavior, the user can either discard 
 
 The result of a training session is a collection of structured examples that can be later provided to a new instance of the same agent to use during inference.
 
+## Made with ARGO
+
+[![Made with ARGO](https://img.shields.io/badge/made_with-argo_ai-purple)](https://github.com/apiad/argo)
+
+Submit a PR if you have a project made with **ARGO** that you want to hightlight here.
+
+- [Lovelaice](https://github.com/apiad/lovelaice) - An AI-powered assistant for your terminal and editor.
+
 ## Roadmap
 
 - Improve documentation and examples.
