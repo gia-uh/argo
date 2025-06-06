@@ -64,7 +64,9 @@ class ChatAgent(Agentic):
         system_prompt=DEFAULT_SYSTEM_PROMPT,
         persistent:bool=True,
         skills: list | None = None,
-        tools: list | None = None
+        tools: list | None = None,
+        skill_cls = MethodSkill,
+        tool_cls = MethodTool,
     ):
         self._name = name
         self._description = description
@@ -74,6 +76,8 @@ class ChatAgent(Agentic):
         self._system_prompt = system_prompt.format(name=name, description=description)
         self._conversation = [Message.system(self._system_prompt)]
         self._persistent = persistent
+        self._skill_cls = skill_cls
+        self._tool_cls = tool_cls
 
         # initialize predefined skills and tools
         for skill in skills or []:
@@ -145,7 +149,7 @@ class ChatAgent(Agentic):
 
         name = target.__name__
         description = inspect.getdoc(target) or ""
-        skill = MethodSkill(name, description, target)
+        skill = self._skill_cls(name, description, target)
         self._skills.append(skill)
         return skill
 
@@ -178,6 +182,6 @@ class ChatAgent(Agentic):
         if any(issubclass(param.annotation, LLM) for param in signature.values()):
             target = self.llm.wrap(target)
 
-        tool = MethodTool(name, description, target)
+        tool = self._tool_cls(name, description, target)
         self._tools.append(tool)
         return tool
