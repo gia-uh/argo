@@ -11,7 +11,7 @@ from .skills import Skill
 from .tools import Tool
 
 
-def create_cot_model(name: str, result_cls:type|Enum) -> type[BaseModel]:
+def create_cot_model(name: str, result_cls: type | Enum) -> type[BaseModel]:
     return create_model(
         name,
         reasoning=(str, ...),
@@ -30,7 +30,6 @@ def create_choose_model(choices: list[str]):
 
 class ToolResult(BaseModel):
     tool: str
-    inputs: dict | None = None
     error: str | None = None
     result: Any | None = None
 
@@ -97,7 +96,7 @@ class Context:
             choose_cls, self._expand_content(*instructions, Message.system(prompt))
         )
 
-        return mapping[response.result.value] # type: ignore
+        return mapping[response.result.value]  # type: ignore
 
     async def decide(self, *instructions) -> bool:
         """Decide True or False.
@@ -116,7 +115,7 @@ class Context:
             decide_cls, self._expand_content(*instructions, Message.system(prompt))
         )
 
-        return response.result # type: ignore
+        return response.result  # type: ignore
 
     async def equip(
         self, *instructions: str | Message, tools: list[Tool] | None = None
@@ -144,7 +143,7 @@ class Context:
             model, self._expand_content(*instructions, Message.system(prompt))
         )
 
-        return mapping[response.result.value] # type: ignore
+        return mapping[response.result.value]  # type: ignore
 
     async def engage(self, *instructions: str | Message) -> Skill:
         """
@@ -165,7 +164,7 @@ class Context:
         messages = self._expand_content(*instructions, Message.system(prompt))
 
         response = await self.agent.llm.create(model, messages)
-        return skills_map[response.result.value] # type: ignore
+        return skills_map[response.result.value]  # type: ignore
 
     async def invoke(
         self,
@@ -208,15 +207,12 @@ class Context:
             result = await tool.run(**response.model_dump())
         except Exception as e:
             if errors == "handle":
-                return ToolResult(
-                    tool=tool.name, inputs=response.model_dump(), error=str(e)
-                )
+                return ToolResult(tool=tool.name, error=str(e))
 
             raise
 
         return ToolResult(
             tool=tool.name,
-            inputs=response.model_dump(),
             result=result,
         )
 
