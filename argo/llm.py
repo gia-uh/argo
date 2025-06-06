@@ -69,7 +69,33 @@ class LLM:
         self.client = openai.AsyncOpenAI(base_url=base_url, api_key=api_key)
         self.callback = callback
 
+    async def complete(self, prompt: str, **kwargs) -> str:
+        """Low-level method for one-shot completion with the LLM."""
+        result = []
+
+        async for chunk in await self.client.completions.create(
+            model=self.model,
+            prompt=prompt,
+            stream=True,
+            **kwargs,
+        ):
+            content = chunk.choices[0].text
+
+            if content is None:
+                continue
+
+            if self.callback:
+                if inspect.iscoroutinefunction(self.callback):
+                    await self.callback(content)
+                else:
+                    self.callback(content)
+
+            result.append(content)
+
+        return "".join(result)
+
     async def chat(self, messages: list[Message], **kwargs) -> Message:
+        """Invoke chat completion on the LLM and return the assistant message."""
         result = []
 
         async for chunk in await self.client.chat.completions.create(
@@ -96,6 +122,9 @@ class LLM:
     async def create[T: BaseModel](
         self, model: type[T], messages: list[Message], **kwargs
     ) -> T:
+        """
+        Invoke chat completion on the LLM and parse the response into a Pydantic model.
+        """
         response = await self.client.beta.chat.completions.parse(
             model=self.model,
             messages=[message.dump() for message in messages],
