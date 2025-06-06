@@ -195,6 +195,10 @@ Submit a PR if you have a project made with **ARGO** that you want to hightlight
 
 ## Changelog
 
+### 0.3.1
+
+- Add constraint for `Context.choose` to guarantee one option is always generated.
+
 ### 0.3.0
 
 ⭐ Agent coordination is here!
