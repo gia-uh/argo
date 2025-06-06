@@ -30,7 +30,7 @@ def create_choose_model(choices: list[str]):
 
 class ToolResult(BaseModel):
     tool: str
-    description: str
+    inputs: dict | None = None
     error: str | None = None
     result: Any | None = None
 
@@ -209,14 +209,14 @@ class Context:
         except Exception as e:
             if errors == "handle":
                 return ToolResult(
-                    tool=tool.name, description=tool.description, error=str(e)
+                    tool=tool.name, inputs=response.model_dump(), error=str(e)
                 )
 
             raise
 
         return ToolResult(
             tool=tool.name,
-            description=tool.description,
+            inputs=response.model_dump(),
             result=result,
         )
 

@@ -4,7 +4,6 @@ from .llm import Message
 from typing import AsyncIterator
 
 
-
 class Skill:
     def __init__(self, name: str, description: str):
         self._name = name
