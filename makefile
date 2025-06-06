@@ -1,6 +1,6 @@
 .PHONY: publish
 publish: clean build
-	uv publish -u __token__ -p `dotenv -f .env get PYPI_TOKEN`
+	uv publish --token `dotenv -f .env get PYPI_TOKEN`
 
 .PHONY: build
 build:
