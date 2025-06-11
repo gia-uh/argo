@@ -10,6 +10,9 @@ from .llm import LLM, Message
 from .declarative import parse
 
 
+dotenv.load_dotenv()
+
+
 app = Typer(name="argo", help="Argo CLI", no_args_is_help=True)
 
 
