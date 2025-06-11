@@ -195,9 +195,12 @@ Submit a PR if you have a project made with **ARGO** that you want to hightlight
 
 ## Changelog
 
+### 0.3.3
+
 - Add method `Context.prompt`.
 - Add pure completion mode for `LLM` class.
 - Customizable classes for skills and tools to override default behavior.
+- Customizable classes for `Context`.
 
 ### 0.3.1
 
