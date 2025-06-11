@@ -1,6 +1,6 @@
 import inspect
 import abc
-from typing import AsyncIterator, Protocol
+from typing import AsyncIterator, Callable, Protocol
 
 from .llm import LLM, Message
 from .prompts import DEFAULT_SYSTEM_PROMPT
@@ -67,6 +67,7 @@ class ChatAgent(Agentic):
         tools: list | None = None,
         skill_cls = MethodSkill,
         tool_cls = MethodTool,
+        prompt_callback: Callable | None = None,
     ):
         self._name = name
         self._description = description
@@ -78,6 +79,7 @@ class ChatAgent(Agentic):
         self._persistent = persistent
         self._skill_cls = skill_cls
         self._tool_cls = tool_cls
+        self._prompt_callback = prompt_callback
 
         # initialize predefined skills and tools
         for skill in skills or []:

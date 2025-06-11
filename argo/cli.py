@@ -13,7 +13,7 @@ from .declarative import parse
 app = Typer(name="argo", help="Argo CLI", no_args_is_help=True)
 
 
-def loop(agent: ChatAgent, print_response: bool = False):
+def loop(agent: ChatAgent):
     """Runs a CLI agent loop with integrated
     conversation history management.
 
@@ -37,11 +37,8 @@ def loop(agent: ChatAgent, print_response: bool = False):
                 user_input = input(">>> ")
                 m = Message.user(user_input)
 
-                async for m in agent.perform(m):
+                async for r in agent.perform(m):
                     pass
-
-                if print_response:
-                    rich.print(m)
 
                 print("\n")
             except (EOFError, KeyboardInterrupt):

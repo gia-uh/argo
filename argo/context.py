@@ -1,3 +1,4 @@
+import inspect
 import json
 from typing import Any, Literal
 from pydantic import BaseModel, create_model
@@ -238,6 +239,21 @@ class Context:
         )
 
         return await self.agent.llm.create(model, messages)
+
+    async def prompt(self):
+        """
+        Prompts the user for input.
+        """
+        if self.agent._prompt_callback is None:
+            raise TypeError("Prompt callback is not set.")
+
+        if inspect.iscoroutinefunction(self.agent._prompt_callback):
+            m = await self.agent._prompt_callback()
+        else:
+            m = self.agent._prompt_callback()
+
+        self.add(m)
+
 
     def add(self, *messages: Message | str | BaseModel) -> None:
         """
