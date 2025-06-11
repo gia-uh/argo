@@ -65,10 +65,13 @@ class ChatAgent(Agentic):
         persistent:bool=True,
         skills: list | None = None,
         tools: list | None = None,
-        skill_cls = MethodSkill,
-        tool_cls = MethodTool,
+        context_cls = None,
+        skill_cls = None,
+        tool_cls = None,
         prompt_callback: Callable | None = None,
     ):
+        from .context import Context
+
         self._name = name
         self._description = description
         self._llm = llm
@@ -77,8 +80,9 @@ class ChatAgent(Agentic):
         self._system_prompt = system_prompt.format(name=name, description=description)
         self._conversation = [Message.system(self._system_prompt)]
         self._persistent = persistent
-        self._skill_cls = skill_cls
-        self._tool_cls = tool_cls
+        self._skill_cls = skill_cls or MethodSkill
+        self._tool_cls = tool_cls or MethodTool
+        self._context_cls = context_cls or Context
         self._prompt_callback = prompt_callback
 
         # initialize predefined skills and tools
@@ -117,13 +121,12 @@ class ChatAgent(Agentic):
         return self._llm
 
     async def perform(self, input: Message) -> AsyncIterator[Message]:
-        from .context import Context
         """Main entrypoint for the agent.
 
         This method will select the right skill to perform the task and then execute it.
         The skill is selected based on the messages and the skills available to the agent.
         """
-        context = Context(self, list(self._conversation) + [input])
+        context = self._context_cls(self, list(self._conversation) + [input])
         skill = await context.engage()
 
         messages = []
