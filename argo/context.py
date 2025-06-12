@@ -63,7 +63,7 @@ class Context:
         return messages
 
     async def reply(
-        self, *instructions: str | Message, persistent: bool = False
+        self, *instructions: str | Message, persistent: bool = True
     ) -> Message:
         """Reply to the provided messages.
 
@@ -254,16 +254,15 @@ class Context:
 
         self.add(m)
 
+    async def delegate(self, skill: Skill):
+        """
+        Delegate to another skill.
+        """
+        await skill.execute(self)
 
     def add(self, *messages: Message | str | BaseModel) -> None:
         """
-        Appends a message to the context.
+        Appends a message to the conversation context.
         """
         for message in messages:
             self._messages.append(self._wrap(message))
-
-    def pop(self) -> Message:
-        """
-        Pops the last message from the context.
-        """
-        return self._messages.pop()

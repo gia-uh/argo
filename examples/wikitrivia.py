@@ -75,13 +75,14 @@ async def question_answering(ctx: Context):
         ctx.add(reasoning)
 
         if reasoning.final:
-            yield await ctx.reply()
+            await ctx.reply()
+            return
 
         results = await ctx.invoke(search, errors="handle")
 
         ctx.add(results)
 
-    yield await ctx.reply("Reply with the best available information in the context.")
+    await ctx.reply("Reply with the best available information in the context.")
 
 
 @agent.tool

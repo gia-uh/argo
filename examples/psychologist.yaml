@@ -10,4 +10,4 @@ skills:
         negative:
           - reply: "Help the user understand the root of the problem."
         neutral:
-          - reply: "Politely ask the user about they feel about said issue."
+          - reply: "Politely ask the user how they feel about said issue."

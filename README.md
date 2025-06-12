@@ -195,6 +195,9 @@ Submit a PR if you have a project made with **ARGO** that you want to hightlight
 
 ## Changelog
 
+- Skills now don't return anything, it's all handled by the context.
+- Add `Context.delegate` to delegate work to another skill.
+
 ### 0.3.3
 
 - Add method `Context.prompt`.

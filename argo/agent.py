@@ -126,18 +126,16 @@ class ChatAgent(Agentic):
         This method will select the right skill to perform the task and then execute it.
         The skill is selected based on the messages and the skills available to the agent.
         """
+        conversation_len = len(self._conversation)
         context = self._context_cls(self, list(self._conversation) + [input])
         skill = await context.engage()
+        await skill.execute(context)
+        self._conversation = context.messages
 
-        messages = []
-
-        async for m in skill.execute(context): # type: ignore
+        for m in self._conversation[conversation_len:]:
             yield m
-            messages.append(m)
 
-        self._conversation.extend(messages)
-
-    def skill(self, target):
+    def skill(self, target) -> Skill:
         """
         Add a method as a skill to the agent.
         The method must be an async generator.
@@ -149,8 +147,8 @@ class ChatAgent(Agentic):
         if not callable(target):
             raise ValueError("Skill must be a callable.")
 
-        if not inspect.isasyncgenfunction(target):
-            raise ValueError("Skill must be an async generator.")
+        if not inspect.iscoroutinefunction(target):
+            raise ValueError("Skill must be a coroutine function.")
 
         name = target.__name__
         description = inspect.getdoc(target) or ""
@@ -158,7 +156,7 @@ class ChatAgent(Agentic):
         self._skills.append(skill)
         return skill
 
-    def tool(self, target):
+    def tool(self, target) -> Tool:
         """
         Adds a method as a tool to the agent.
 

@@ -21,7 +21,7 @@ def prompt_callback():
 agent = ChatAgent(
     name="Guesser",
     description="A magician that can guess what your thinking of.",
-    llm=LLM(model=os.getenv("MODEL"), callback=callback, verbose=True),
+    llm=LLM(model=os.getenv("MODEL"), callback=callback, verbose=False),
     prompt_callback=prompt_callback,
 )
 
@@ -48,13 +48,13 @@ async def guess(ctx: Context):
         )
 
         if reasoning.done:
-            yield await ctx.reply(f"Claim the user is thinking of {reasoning.guess}.")
+            await ctx.reply(f"Claim the user is thinking of {reasoning.guess}.")
             return
 
-        yield await ctx.reply(f"Ask the user {reasoning.question}.")
+        await ctx.reply(f"Ask the user {reasoning.question}.")
         await ctx.prompt()
 
-    yield await ctx.reply("Give up, congratulate the user for winning.")
+    await ctx.reply("Give up, congratulate the user for winning.")
 
 
 loop(agent)

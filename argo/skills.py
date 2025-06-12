@@ -1,8 +1,5 @@
 import abc
 
-from .llm import Message
-from typing import AsyncIterator
-
 
 class Skill:
     def __init__(self, name: str, description: str):
@@ -18,7 +15,7 @@ class Skill:
         return self._description
 
     @abc.abstractmethod
-    async def execute(self, ctx) -> AsyncIterator[Message]:
+    async def execute(self, ctx):
         pass
 
 
@@ -27,13 +24,12 @@ class MethodSkill(Skill):
         super().__init__(name, description)
         self._target = target
 
-    async def execute(self, ctx): # type: ignore
-        async for m in self._target(ctx):
-            yield m
+    async def execute(self, ctx):
+        await self._target(ctx)
 
 
-async def chat(ctx: "Context"):
+async def chat(ctx):
     """
     Casual chat with the user.
     """
-    yield await ctx.reply()
+    await ctx.reply()
