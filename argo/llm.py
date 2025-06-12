@@ -56,6 +56,7 @@ class LLM:
         verbose: bool = False,
         base_url: str | None = None,
         api_key: str | None = None,
+        **extra_kwargs,
     ):
         self.model = model
         self.verbose = verbose
@@ -67,6 +68,7 @@ class LLM:
 
         self.client = openai.AsyncOpenAI(base_url=base_url, api_key=api_key)
         self.callback = callback
+        self.extra_kwargs = extra_kwargs
 
     async def complete(self, prompt: str, **kwargs) -> str:
         """Low-level method for one-shot completion with the LLM."""
@@ -76,7 +78,7 @@ class LLM:
             model=self.model,
             prompt=prompt,
             stream=True,
-            **kwargs,
+            **(kwargs | self.extra_kwargs),
         ):
             content = chunk.choices[0].text
 
@@ -101,7 +103,7 @@ class LLM:
             model=self.model,
             messages=[message.dump() for message in messages], # type: ignore
             stream=True,
-            **kwargs,
+            **(kwargs | self.extra_kwargs),
         ): # type: ignore
             content = chunk.choices[0].delta.content
 
