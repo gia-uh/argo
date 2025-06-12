@@ -62,14 +62,22 @@ def run(
     model: str = Option(
         ..., "--model", "-m", help="Model to use for the LLM.", envvar="MODEL"
     ),
+    verbose: bool = Option(False, "--verbose", "-v", help="Enable verbose mode."),
 ):
     """
     Run an agent defined in a YAML file with a basic CLI loop.
     """
+
     def callback(chunk: str):
         print(chunk, end="")
 
-    llm = LLM(model=model, api_key=api_key, base_url=base_url, callback=callback)
+    llm = LLM(
+        model=model,
+        api_key=api_key,
+        base_url=base_url,
+        callback=callback,
+        verbose=verbose,
+    )
 
     config = parse(path)
     agent = config.compile(llm)
@@ -90,6 +98,7 @@ def serve(
     ),
     host: str = Option("127.0.0.1", "--host", "-h", help="Host IP to bind to."),
     port: int = Option(8000, "--port", "-p", help="Port to bind to."),
+    verbose: bool = Option(False, "--verbose", "-v", help="Enable verbose mode."),
 ):
     """
     Start a FastAPI server to run an agent in API-mode.
@@ -100,7 +109,7 @@ def serve(
         print("Please install argo[server] to use this command.")
         raise Exit(1)
 
-    llm = LLM(model=model, api_key=api_key, base_url=base_url)
+    llm = LLM(model=model, api_key=api_key, base_url=base_url, verbose=verbose)
 
     config = parse(path)
     agent = config.compile(llm)

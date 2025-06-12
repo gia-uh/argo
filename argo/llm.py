@@ -1,12 +1,11 @@
+import os
 import functools
 import inspect
-from typing import Any, Callable, Coroutine, Literal
+from typing import Any, Callable, Literal
+
 import rich
 import openai
 from pydantic import BaseModel
-import os
-
-from openai.types.chat import ChatCompletionMessageParam
 
 
 class Message(BaseModel):
@@ -29,8 +28,8 @@ class Message(BaseModel):
     def tool(cls, content: Any) -> "Message":
         return cls(role="tool", content=content)
 
-    def dump(self) -> ChatCompletionMessageParam:
-        return dict(  # type: ignore
+    def dump(self):
+        return dict(
             role=self.role,
             content=(
                 self.content.model_dump_json()
@@ -100,10 +99,10 @@ class LLM:
 
         async for chunk in await self.client.chat.completions.create(
             model=self.model,
-            messages=[message.dump() for message in messages],
+            messages=[message.dump() for message in messages], # type: ignore
             stream=True,
             **kwargs,
-        ):
+        ): # type: ignore
             content = chunk.choices[0].delta.content
 
             if content is None:
@@ -127,7 +126,7 @@ class LLM:
         """
         response = await self.client.beta.chat.completions.parse(
             model=self.model,
-            messages=[message.dump() for message in messages],
+            messages=[message.dump() for message in messages], # type: ignore
             response_format=model,
             **kwargs,
         )

@@ -1,5 +1,5 @@
 import abc
-from typing import Annotated, Any, Awaitable, Callable, Coroutine, Union
+from typing import Annotated, Any, Callable, Coroutine, Union
 import yaml
 
 from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, model_validator
@@ -200,7 +200,7 @@ class DeclarativeSkill(Skill):
         super().__init__(config.name, config.description)
         self.steps = config.steps.compile()
 
-    async def _execute(self, ctx):
+    async def execute(self, ctx):
         await self.steps(ctx)
 
 
