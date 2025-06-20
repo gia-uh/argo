@@ -185,6 +185,99 @@ Submit a PR if you have a project made with **ARGO** that you want to hightlight
 
 - [Lovelaice](https://github.com/apiad/lovelaice) - An AI-powered assistant for your terminal and editor.
 
+## Roadmap
+
+- Improve documentation and examples.
+- Add tool definition via YAML and REST endpoints.
+- Add streaming mode for server.
+- Add support for skill composition.
+- Add training mode.
+
+## Changelog
+
+### 0.4.0
+
+- Skills now don't return anything, it's all handled by the context.
+- Add `Context.delegate` to delegate work to another skill.
+
+### 0.3.3
+
+- Add method `Context.prompt`.
+- Add pure completion mode for `LLM` class.
+- Customizable classes for skills and tools to override default behavior.
+- Customizable classes for `Context`.
+
+### 0.3.1
+
+- Add constraint for `Context.choose` to guarantee one option is always generated.
+
+### 0.3.0
+
+⭐ Agent coordination is here!
+
+- Add `Crew` and `MessageBoard`.
+- Implement simple messaging board using async queues.
+- Add example of coordination (email agents).
+
+### 0.2.4
+
+- Add automatic FastAPI server for agents.
+- Improve CLI with `typer`.
+- Error handling for tool invocations.
+
+### 0.2.3
+
+- Improve `Context.create` to automatically inject model schema.
+- Improve the search example to showcase ReAct-style reasoning.
+
+### 0.2.2
+
+- Redesign `choose` to define keys right in root step object.
+
+### 0.2.1
+
+- Add support for ReAct-style reasoning.
+- Refactor the search example to showcase ReAct-style reasoning.
+
+### 0.2.0
+
+- Refactor the skill interface to use `Context`.
+- Fix all examples.
+
+### 0.1.8
+
+- Support for choice prompts in YAML mode.
+- Example for `choice` instructions.
+
+### 0.1.7
+
+- Support for decision prompts in YAML mode.
+- Example for `decide` instruction.
+
+### 0.1.6
+
+- Basic API for declarative agents (YAML mode).
+- Example of basic YAML agent.
+- CLI entrypoint for loading YAML agents.
+
+### 0.1.5
+
+- Middleware for skills (`@skill.require` syntax)
+- Better handling of errors.
+
+### 0.1.4
+
+- Verbose mode for LLM.
+- Several new examples.
+
+### 0.1.3
+
+- Automatic skill selection and tool invocation.
+
+### 0.1.2
+
+- Basic architecture for agents, skills, and tools.
+
 ## Contributing
 
 Contributions are welcome! Please read the [Contribution Guidelines](CONTRIBUTING.md) for specific details.
