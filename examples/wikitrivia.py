@@ -76,6 +76,7 @@ async def question_answering(ctx: Context):
 
         if reasoning.final:
             yield await ctx.reply()
+            return
 
         results = await ctx.invoke(search, errors="handle")
 
