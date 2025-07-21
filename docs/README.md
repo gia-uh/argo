@@ -1,6 +1,4 @@
-<p align="center">
-<img src="https://github.com/user-attachments/assets/33b80515-6758-48e1-aa8e-ed5de27efea6" width="300"/>    
-</p>
+# ARGO
 
 ![PyPI - Version](https://img.shields.io/pypi/v/argo-ai) ![GitHub License](https://img.shields.io/github/license/apiad/argo)
 

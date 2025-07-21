@@ -26,7 +26,7 @@ async def code(ctx: Context):
     Use this skill when you need to compute some math operations.
     """
     result = await ctx.invoke(interpreter)
-    yield await ctx.reply(f"Result={result}.\n\nReply to the user.")
+    await ctx.reply(f"Result={result}.\n\nReply to the user.")
 
 
 @agent.tool

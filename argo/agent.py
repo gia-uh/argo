@@ -1,6 +1,6 @@
 import inspect
 import abc
-from typing import AsyncIterator, Protocol
+from typing import AsyncIterator, Callable, Protocol
 
 from .llm import LLM, Message
 from .prompts import DEFAULT_SYSTEM_PROMPT
@@ -64,8 +64,14 @@ class ChatAgent(Agentic):
         system_prompt=DEFAULT_SYSTEM_PROMPT,
         persistent:bool=True,
         skills: list | None = None,
-        tools: list | None = None
+        tools: list | None = None,
+        context_cls = None,
+        skill_cls = None,
+        tool_cls = None,
+        prompt_callback: Callable | None = None,
     ):
+        from .context import Context
+
         self._name = name
         self._description = description
         self._llm = llm
@@ -74,6 +80,10 @@ class ChatAgent(Agentic):
         self._system_prompt = system_prompt.format(name=name, description=description)
         self._conversation = [Message.system(self._system_prompt)]
         self._persistent = persistent
+        self._skill_cls = skill_cls or MethodSkill
+        self._tool_cls = tool_cls or MethodTool
+        self._context_cls = context_cls or Context
+        self._prompt_callback = prompt_callback
 
         # initialize predefined skills and tools
         for skill in skills or []:
@@ -111,24 +121,21 @@ class ChatAgent(Agentic):
         return self._llm
 
     async def perform(self, input: Message) -> AsyncIterator[Message]:
-        from .context import Context
         """Main entrypoint for the agent.
 
         This method will select the right skill to perform the task and then execute it.
         The skill is selected based on the messages and the skills available to the agent.
         """
-        context = Context(self, list(self._conversation) + [input])
+        conversation_len = len(self._conversation)
+        context = self._context_cls(self, list(self._conversation) + [input])
         skill = await context.engage()
+        await skill.execute(context)
+        self._conversation = context.messages
 
-        messages = []
-
-        async for m in skill.execute(context): # type: ignore
+        for m in self._conversation[conversation_len:]:
             yield m
-            messages.append(m)
 
-        self._conversation.extend(messages)
-
-    def skill(self, target):
+    def skill(self, target) -> Skill:
         """
         Add a method as a skill to the agent.
         The method must be an async generator.
@@ -140,16 +147,16 @@ class ChatAgent(Agentic):
         if not callable(target):
             raise ValueError("Skill must be a callable.")
 
-        if not inspect.isasyncgenfunction(target):
-            raise ValueError("Skill must be an async generator.")
+        if not inspect.iscoroutinefunction(target):
+            raise ValueError("Skill must be a coroutine function.")
 
         name = target.__name__
         description = inspect.getdoc(target) or ""
-        skill = MethodSkill(name, description, target)
+        skill = self._skill_cls(name, description, target)
         self._skills.append(skill)
         return skill
 
-    def tool(self, target):
+    def tool(self, target) -> Tool:
         """
         Adds a method as a tool to the agent.
 
@@ -178,6 +185,6 @@ class ChatAgent(Agentic):
         if any(issubclass(param.annotation, LLM) for param in signature.values()):
             target = self.llm.wrap(target)
 
-        tool = MethodTool(name, description, target)
+        tool = self._tool_cls(name, description, target)
         self._tools.append(tool)
         return tool

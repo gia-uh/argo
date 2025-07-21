@@ -47,7 +47,7 @@ async def casual_chat(ctx: Context):
     Use this skill when the user asks a general question or engages
     in casual chat.
     """
-    yield await ctx.reply()
+    await ctx.reply()
 
 
 @agent.skill
@@ -59,7 +59,7 @@ async def banker(ctx: Context):
     """
     tool = await ctx.equip()
     result = await ctx.invoke(tool)
-    yield await ctx.reply(Message.tool(result))
+    await ctx.reply(Message.tool(result))
 
 
 @agent.tool

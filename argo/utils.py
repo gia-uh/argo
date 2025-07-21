@@ -31,7 +31,7 @@ def generate_pydantic_code(model_cls: type[BaseModel]) -> str:
     lines = []
     visited = set()
 
-    def generate(cls, lines: list[str], visited: str):
+    def generate(cls, lines: list[str], visited: set):
         class_name = model_cls.__name__
 
         if cls.__name__ in visited:

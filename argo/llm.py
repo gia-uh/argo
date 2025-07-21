@@ -1,12 +1,11 @@
+import os
 import functools
 import inspect
-from typing import Any, Callable, Coroutine, Literal
+from typing import Any, Callable, Literal
+
 import rich
 import openai
 from pydantic import BaseModel
-import os
-
-from openai.types.chat import ChatCompletionMessageParam
 
 
 class Message(BaseModel):
@@ -29,8 +28,8 @@ class Message(BaseModel):
     def tool(cls, content: Any) -> "Message":
         return cls(role="tool", content=content)
 
-    def dump(self) -> ChatCompletionMessageParam:
-        return dict(  # type: ignore
+    def dump(self):
+        return dict(
             role=self.role,
             content=(
                 self.content.model_dump_json()
@@ -57,6 +56,7 @@ class LLM:
         verbose: bool = False,
         base_url: str | None = None,
         api_key: str | None = None,
+        **extra_kwargs,
     ):
         self.model = model
         self.verbose = verbose
@@ -68,16 +68,43 @@ class LLM:
 
         self.client = openai.AsyncOpenAI(base_url=base_url, api_key=api_key)
         self.callback = callback
+        self.extra_kwargs = extra_kwargs
+
+    async def complete(self, prompt: str, **kwargs) -> str:
+        """Low-level method for one-shot completion with the LLM."""
+        result = []
+
+        async for chunk in await self.client.completions.create(
+            model=self.model,
+            prompt=prompt,
+            stream=True,
+            **(kwargs | self.extra_kwargs),
+        ):
+            content = chunk.choices[0].text
+
+            if content is None:
+                continue
+
+            if self.callback:
+                if inspect.iscoroutinefunction(self.callback):
+                    await self.callback(content)
+                else:
+                    self.callback(content)
+
+            result.append(content)
+
+        return "".join(result)
 
     async def chat(self, messages: list[Message], **kwargs) -> Message:
+        """Invoke chat completion on the LLM and return the assistant message."""
         result = []
 
         async for chunk in await self.client.chat.completions.create(
             model=self.model,
-            messages=[message.dump() for message in messages],
+            messages=[message.dump() for message in messages], # type: ignore
             stream=True,
-            **kwargs,
-        ):
+            **(kwargs | self.extra_kwargs),
+        ): # type: ignore
             content = chunk.choices[0].delta.content
 
             if content is None:
@@ -96,9 +123,12 @@ class LLM:
     async def create[T: BaseModel](
         self, model: type[T], messages: list[Message], **kwargs
     ) -> T:
+        """
+        Invoke chat completion on the LLM and parse the response into a Pydantic model.
+        """
         response = await self.client.beta.chat.completions.parse(
             model=self.model,
-            messages=[message.dump() for message in messages],
+            messages=[message.dump() for message in messages], # type: ignore
             response_format=model,
             **kwargs,
         )

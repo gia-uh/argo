@@ -1,5 +1,5 @@
 import abc
-from typing import Annotated, Any, Union
+from typing import Annotated, Any, Callable, Coroutine, Union
 import yaml
 
 from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, model_validator
@@ -23,7 +23,7 @@ class ToolConfig(BaseModel):
 
 class SkillStep(BaseModel):
     @abc.abstractmethod
-    def compile(self):
+    def compile(self) -> Callable[[Context], Coroutine[Any, Any, None]]:
         pass
 
 
@@ -36,7 +36,7 @@ class DecideStep(SkillStep):
         true_branch = self.yes.compile()
         false_branch = self.no.compile()
 
-        async def decide_step(ctx: Context) -> Message:
+        async def decide_step(ctx: Context):
             instructions = []
 
             if self.decide:
@@ -45,9 +45,9 @@ class DecideStep(SkillStep):
             decision = await ctx.decide(*instructions)
 
             if decision:
-                return await true_branch(ctx)
+                await true_branch(ctx)
             else:
-                return await false_branch(ctx)
+                await false_branch(ctx)
 
         return decide_step
 
@@ -67,15 +67,14 @@ class ChooseStep(SkillStep):
     def compile(self):
         compiled_choices = {k: v.compile() for k, v in self.choices.items()}
 
-        async def choose_step(ctx: Context) -> Message:
+        async def choose_step(ctx: Context):
             instructions = []
 
             if self.choose:
                 instructions.append(Message.system(self.choose))
 
             choice = await ctx.choose(list(compiled_choices.keys()), *instructions)
-
-            return await compiled_choices[choice](ctx)
+            await compiled_choices[choice](ctx)
 
         return choose_step
 
@@ -94,15 +93,11 @@ class WhileStep(SkillStep):
     def compile(self):
         compiled_steps = self.steps.compile()
 
-        async def while_step(ctx: Context) -> Message:
-            m: Message = await compiled_steps(ctx)
-            ctx.add(m)
+        async def while_step(ctx: Context):
+            await compiled_steps(ctx)
 
             while await ctx.decide(self.condition):
-                m = await compiled_steps(ctx)
-                ctx.add(m)
-
-            return m
+                await compiled_steps(ctx)
 
         return while_step
 
@@ -121,15 +116,11 @@ class UntilStep(SkillStep):
     def compile(self):
         compiled_steps = self.steps.compile()
 
-        async def until_step(ctx: Context) -> Message:
-            m: Message = await compiled_steps(ctx)
-            ctx.add(m)
+        async def until_step(ctx: Context):
+            await compiled_steps(ctx)
 
             while not await ctx.decide(self.condition):
-                m = await compiled_steps(ctx)
-                ctx.add(m)
-
-            return m
+                await compiled_steps(ctx)
 
         return until_step
 
@@ -138,13 +129,13 @@ class ReplyStep(SkillStep):
     reply: str | None
 
     def compile(self):
-        async def reply_step(ctx: Context) -> Message:
+        async def reply_step(ctx: Context):
             instructions = []
 
             if self.reply:
                 instructions.append(Message.system(self.reply))
 
-            return await ctx.reply(*instructions)
+            await ctx.reply(*instructions)
 
         return reply_step
 
@@ -188,18 +179,9 @@ class StepList(
     def compile(self):
         steps = [s.compile() for s in self.root]
 
-        async def step_list(ctx: Context) -> Message:
-            m: Message | None = None
-            messages = ctx.messages
-
+        async def step_list(ctx: Context):
             for step in steps:
-                m = await step(ctx)
-                messages.append(m)
-
-            if m is None:
-                raise ValueError("No message returned from steps")
-
-            return m
+                await step(ctx)
 
         return step_list
 
@@ -218,8 +200,8 @@ class DeclarativeSkill(Skill):
         super().__init__(config.name, config.description)
         self.steps = config.steps.compile()
 
-    async def _execute(self, ctx):
-        return await self.steps(ctx)
+    async def execute(self, ctx):
+        await self.steps(ctx)
 
 
 class AgentConfig(BaseModel):

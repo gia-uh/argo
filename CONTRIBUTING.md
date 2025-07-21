@@ -13,7 +13,7 @@ Thank you for your interest in contributing to **ARGO**! We welcome contribution
 1. **Fork the repository** and clone it locally.
 2. **Create a new branch** for your feature or bugfix.
 3. **Write tests** for your changes. PRs without tests are unlikely to be accepted.
-4. **Follow code style guidelines** (PEP8 for Python).
+4. **Follow code style guidelines** using the black Python formatter.
 5. **Submit a pull request** with a clear description of your changes and reference any related issues.
 
 ## Committing
@@ -24,18 +24,19 @@ Thank you for your interest in contributing to **ARGO**! We welcome contribution
 ## Dependencies
 
 Before adding a new dependency, ensure that:
+
 - There is a strong use case for it.
 - It has an acceptable license (e.g., MIT, Apache 2.0).
 - It is actively maintained.
-- It has no known security issues[1][5].
+- It has no known security issues.
 
 ## Review Process
 
 - Anyone can review a pull request and leave comments or suggestions.
 - Maintainers will review and merge pull requests that meet project standards.
-- Larger features may require a design document or proposal before implementation[6].
+- Larger features may require a design document or proposal before implementation.
 - If an issue is a user error, relabel it as `type/support` instead of `type/bug`.
-- Issues needing more information should be labeled `problem/more information needed`. If there is no response, they may be marked as stale and closed automatically[1].
+- Issues needing more information should be labeled `problem/more information needed`. If there is no response, they may be marked as stale and closed automatically.
 
 ## Community
 

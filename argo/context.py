@@ -1,6 +1,8 @@
+import inspect
 import json
 from typing import Any, Literal
 from pydantic import BaseModel, create_model
+from enum import Enum
 
 from .agent import ChatAgent
 from .llm import Message
@@ -10,31 +12,27 @@ from .skills import Skill
 from .tools import Tool
 
 
-class Choose(BaseModel):
-    reasoning: str
-    selection: str
+def create_cot_model(name: str, result_cls: type | Enum) -> type[BaseModel]:
+    return create_model(
+        name,
+        reasoning=(str, ...),
+        result=(result_cls, ...),
+    )
 
 
-class Decide(BaseModel):
-    reasoning: str
-    answer: bool
+def create_decide_model():
+    return create_cot_model("Decide", bool)
+
+
+def create_choose_model(choices: list[str]):
+    enum_type = Enum("Choices", {c: c for c in choices})
+    return create_cot_model("Choose", enum_type)
 
 
 class ToolResult(BaseModel):
     tool: str
-    description: str
     error: str | None = None
     result: Any | None = None
-
-
-class Equip(BaseModel):
-    reasoning: str
-    tool: str
-
-
-class Engage(BaseModel):
-    reasoning: str
-    skill: str
 
 
 class Context:
@@ -65,7 +63,7 @@ class Context:
         return messages
 
     async def reply(
-        self, *instructions: str | Message, persistent: bool = False
+        self, *instructions: str | Message, persistent: bool = True
     ) -> Message:
         """Reply to the provided messages.
 
@@ -88,17 +86,18 @@ class Context:
         Mostly useful inside skills to make decisions.
         """
         mapping = {str(option): option for option in options}
+        choose_cls = create_choose_model(choices=list(mapping.keys()))
 
         prompt = DEFAULT_CHOOSE_PROMPT.format(
             options="\n".join([f"- {option}" for option in options]),
-            format=Choose.model_json_schema(),
+            format=choose_cls.model_json_schema(),
         )
 
         response = await self.agent.llm.create(
-            Choose, self._expand_content(*instructions, Message.system(prompt))
+            choose_cls, self._expand_content(*instructions, Message.system(prompt))
         )
 
-        return mapping[response.selection]
+        return mapping[response.result.value]  # type: ignore
 
     async def decide(self, *instructions) -> bool:
         """Decide True or False.
@@ -107,15 +106,17 @@ class Context:
         It does not use any skills.
         Mostly useful inside skills to make decisions.
         """
+        decide_cls = create_decide_model()
+
         prompt = DEFAULT_DECIDE_PROMPT.format(
-            format=Decide.model_json_schema(),
+            format=decide_cls.model_json_schema(),
         )
 
         response = await self.agent.llm.create(
-            Decide, self._expand_content(*instructions, Message.system(prompt))
+            decide_cls, self._expand_content(*instructions, Message.system(prompt))
         )
 
-        return response.answer
+        return response.result  # type: ignore
 
     async def equip(
         self, *instructions: str | Message, tools: list[Tool] | None = None
@@ -132,16 +133,18 @@ class Context:
         tool_str = {tool.name: tool.description for tool in tools}
         mapping = {tool.name: tool for tool in tools}
 
+        model = create_choose_model(list(tool_str.keys()))
+
         prompt = DEFAULT_EQUIP_PROMPT.format(
             tools=tool_str,
-            format=Equip.model_json_schema(),
+            format=model.model_json_schema(),
         )
 
         response = await self.agent.llm.create(
-            Equip, self._expand_content(*instructions, Message.system(prompt))
+            model, self._expand_content(*instructions, Message.system(prompt))
         )
 
-        return mapping[response.tool]
+        return mapping[response.result.value]  # type: ignore
 
     async def engage(self, *instructions: str | Message) -> Skill:
         """
@@ -150,18 +153,19 @@ class Context:
         """
         skills: list[Skill] = self.agent._skills
         skills_map = {s.name: s for s in skills}
+        model = create_choose_model(list(skills_map.keys()))
 
         prompt = DEFAULT_ENGAGE_PROMPT.format(
             skills="\n".join(
                 [f"- {skill.name}: {skill.description}" for skill in skills]
             ),
-            format=Engage.model_json_schema(),
+            format=model.model_json_schema(),
         )
 
         messages = self._expand_content(*instructions, Message.system(prompt))
 
-        response = await self.agent.llm.create(Engage, messages)
-        return skills_map[response.skill]
+        response = await self.agent.llm.create(model, messages)
+        return skills_map[response.result.value]  # type: ignore
 
     async def invoke(
         self,
@@ -204,15 +208,12 @@ class Context:
             result = await tool.run(**response.model_dump())
         except Exception as e:
             if errors == "handle":
-                return ToolResult(
-                    tool=tool.name, description=tool.description, error=str(e)
-                )
+                return ToolResult(tool=tool.name, error=str(e))
 
             raise
 
         return ToolResult(
             tool=tool.name,
-            description=tool.description,
             result=result,
         )
 
@@ -239,15 +240,29 @@ class Context:
 
         return await self.agent.llm.create(model, messages)
 
+    async def prompt(self):
+        """
+        Prompts the user for input.
+        """
+        if self.agent._prompt_callback is None:
+            raise TypeError("Prompt callback is not set.")
+
+        if inspect.iscoroutinefunction(self.agent._prompt_callback):
+            m = await self.agent._prompt_callback()
+        else:
+            m = self.agent._prompt_callback()
+
+        self.add(m)
+
+    async def delegate(self, skill: Skill):
+        """
+        Delegate to another skill.
+        """
+        await skill.execute(self)
+
     def add(self, *messages: Message | str | BaseModel) -> None:
         """
-        Appends a message to the context.
+        Appends a message to the conversation context.
         """
         for message in messages:
             self._messages.append(self._wrap(message))
-
-    def pop(self) -> Message:
-        """
-        Pops the last message from the context.
-        """
-        return self._messages.pop()
