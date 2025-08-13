@@ -28,7 +28,7 @@ async def chat(ctx: Context):
     Use this only for greetings, basic chat,
     and questions regarding your own capabilities.
     """
-    yield await ctx.reply()
+    await ctx.reply()
 
 
 class Reasoning(BaseModel):

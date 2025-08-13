@@ -1,6 +1,5 @@
 from argo import ChatAgent, LLM
 from argo.cli import loop
-from argo.llm import Message
 from argo.skills import chat
 import dotenv
 import os
