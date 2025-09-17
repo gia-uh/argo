@@ -1,4 +1,6 @@
-# ARGO
+<p align="center">
+<img src="https://github.com/user-attachments/assets/33b80515-6758-48e1-aa8e-ed5de27efea6" width="300"/>
+</p>
 
 ![PyPI - Version](https://img.shields.io/pypi/v/argo-ai) ![GitHub License](https://img.shields.io/github/license/apiad/argo)
 
@@ -194,6 +196,10 @@ Submit a PR if you have a project made with **ARGO** that you want to hightlight
 - Add training mode.
 
 ## Changelog
+
+### 0.4.1
+
+- Add `argo.client.stream` for streaming responses from an agent in synchronous mode.
 
 ### 0.4.0
 
