@@ -8,14 +8,10 @@ from argo.cli import loop
 dotenv.load_dotenv()
 
 
-def callback(chunk: str):
-    print(chunk, end="")
-
-
 agent = ChatAgent(
     name="Coder",
     description="A helpful assistant that can write and run Python code.",
-    llm=LLM(model=os.getenv("MODEL"), callback=callback),
+    llm=LLM(model=os.getenv("MODEL")),
 )
 
 

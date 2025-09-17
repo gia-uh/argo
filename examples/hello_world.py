@@ -8,14 +8,10 @@ import os
 dotenv.load_dotenv()
 
 
-def callback(chunk:str):
-    print(chunk, end="")
-
-
 agent = ChatAgent(
     name="Agent",
     description="A helpful assistant.",
-    llm=LLM(model=os.getenv("MODEL"), callback=callback, verbose=False),
+    llm=LLM(model=os.getenv("MODEL"), verbose=False),
     skills=[chat],
 
 )

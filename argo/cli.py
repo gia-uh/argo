@@ -5,6 +5,8 @@ from pathlib import Path
 import dotenv
 import rich
 from typer import Argument, Option, Typer, Exit
+
+from argo.client import stream
 from .agent import ChatAgent
 from .llm import LLM, Message
 from .declarative import parse
@@ -34,20 +36,19 @@ def loop(agent: ChatAgent):
 
     rich.print(f"[yellow]Press Ctrl+D to exit at any time.\n[/yellow]")
 
-    async def run():
-        while True:
-            try:
-                user_input = input(">>> ")
-                m = Message.user(user_input)
+    while True:
+        try:
+            message = input(">>> ").strip()
 
-                async for r in agent.perform(m):
-                    pass
+            if not message:
+                continue
 
-                print("\n")
-            except (EOFError, KeyboardInterrupt):
-                break
+            for chunk in stream(agent, message):
+                print(chunk, end="", flush=True)
 
-    asyncio.run(run())
+            print("\n")
+        except (EOFError, KeyboardInterrupt):
+            break
 
 
 @app.command()

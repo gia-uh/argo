@@ -10,10 +10,6 @@ from argo import Context
 dotenv.load_dotenv()
 
 
-def callback(chunk:str):
-    print(chunk, end="")
-
-
 def prompt_callback():
     return input("\n?>> ")
 
@@ -21,7 +17,7 @@ def prompt_callback():
 agent = ChatAgent(
     name="Guesser",
     description="A magician that can guess what your thinking of.",
-    llm=LLM(model=os.getenv("MODEL"), callback=callback, verbose=False),
+    llm=LLM(model=os.getenv("MODEL"), verbose=False),
     prompt_callback=prompt_callback,
 )
 

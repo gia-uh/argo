@@ -10,14 +10,10 @@ from argo.cli import loop
 dotenv.load_dotenv()
 
 
-def callback(chunk: str):
-    print(chunk, end="")
-
-
-agent = ChatAgent(
+sagent = ChatAgent(
     name="Trivial",
     description="A helpful assistant that can search Wikipedia for answering factual questions.",
-    llm=LLM(model=os.getenv("MODEL"), callback=callback, verbose=True),
+    llm=LLM(model=os.getenv("MODEL"), verbose=True),
 )
 
 

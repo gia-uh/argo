@@ -28,14 +28,10 @@ class Account:
 account = Account(1000)
 
 
-def callback(chunk: str):
-    print(chunk, end="")
-
-
 agent = ChatAgent(
     name="Banker",
     description="A helpful assistant that can execute bank transactions and reply with the account information.",
-    llm=LLM(model=os.getenv("MODEL"), callback=callback, verbose=True),
+    llm=LLM(model=os.getenv("MODEL"), verbose=True),
 )
 
 
