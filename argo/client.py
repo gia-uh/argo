@@ -31,9 +31,13 @@ def stream(agent: ChatAgent, message: str) -> Iterator[str]:
 
     async def perform_chat():
         """The async task that the background thread will run."""
-        async for _ in agent.perform(user_message):
-            pass
-        token_queue.put(None)  # Sentinel to signal the end
+        try:
+            async for _ in agent.perform(user_message):
+                pass
+        except:
+            raise
+        finally:
+            token_queue.put(None)  # Sentinel to signal the end
 
     def run_in_background():
         """Thread target to run the asyncio event loop."""
