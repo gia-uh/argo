@@ -10,7 +10,7 @@ from argo.cli import loop
 dotenv.load_dotenv()
 
 
-sagent = ChatAgent(
+agent = ChatAgent(
     name="Trivial",
     description="A helpful assistant that can search Wikipedia for answering factual questions.",
     llm=LLM(model=os.getenv("MODEL"), verbose=True),
@@ -68,7 +68,7 @@ async def question_answering(ctx: Context):
             model=Reasoning,
         )
 
-        ctx.add(reasoning)
+        ctx.add(Message.system(reasoning))
 
         if reasoning.final:
             await ctx.reply()
@@ -76,7 +76,7 @@ async def question_answering(ctx: Context):
 
         results = await ctx.invoke(search, errors="handle")
 
-        ctx.add(results)
+        ctx.add(Message.system(results))
 
     await ctx.reply("Reply with the best available information in the context.")
 
