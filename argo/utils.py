@@ -62,7 +62,7 @@ def generate_pydantic_code(model_cls: type[BaseModel]) -> str:
             lines.append(line)
 
             # if its a BaseModel, add to visited
-            if issubclass(field_type, BaseModel):
+            if isinstance(field_type, type) and issubclass(field_type, BaseModel):
                 subtypes.append(field_type)
 
         if subtypes:
