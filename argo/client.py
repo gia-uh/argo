@@ -5,6 +5,51 @@ import asyncio
 from typing import Iterator
 
 
+def invoke(agent: ChatAgent, message: str) -> str:
+    """
+    A synchronous method that calls an agent and waits
+    for the full response, returning the final message.
+    """
+    token_queue = queue.Queue()
+
+    # Temporarily override the LLM's callback to use our queue
+    original_callback = agent.llm.callback
+    agent.llm.callback = lambda chunk: token_queue.put(chunk)
+
+    user_message = Message.user(message)
+
+    async def perform_chat():
+        """The async task that the background thread will run."""
+        try:
+            async for _ in agent.perform(user_message):
+                pass
+        except:
+            raise
+        finally:
+            token_queue.put(None)  # Sentinel to signal the end
+
+    def run_in_background():
+        """Thread target to run the asyncio event loop."""
+        asyncio.run(perform_chat())
+
+    # Start the agent in a background thread
+    thread = threading.Thread(target=run_in_background)
+    thread.start()
+
+    # Yield tokens from the queue as they arrive
+    response = []
+    while True:
+        token = token_queue.get()
+        if token is None:
+            break
+        response.append(token)
+
+    # Wait for the thread to finish and restore the original callback
+    thread.join()
+    agent.llm.callback = original_callback
+    return "".join(response)
+
+
 def stream(agent: ChatAgent, message: str) -> Iterator[str]:
     """
     A synchronous generator that streams an ARGO agent's response,
