@@ -3,6 +3,7 @@ import json
 from typing import Any, Literal
 from pydantic import BaseModel, create_model
 from enum import Enum
+import yaml
 
 from .agent import ChatAgent
 from .llm import Message
@@ -50,7 +51,7 @@ class Context:
         elif isinstance(message, str):
             return Message.system(message)
         elif isinstance(message, BaseModel):
-            return Message.tool(message.model_dump_json())
+            return Message.system(yaml.dump(message.model_dump(mode="json")))
 
         raise TypeError(f"Invalid message type: {type(message)}")
 
