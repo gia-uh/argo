@@ -1,3 +1,5 @@
+> **Deprecated and archived (2026-11-21).** This proof of concept is no longer maintained. The name ARGO moves to a new project.
+
 <p align="center">
 <img src="https://github.com/user-attachments/assets/33b80515-6758-48e1-aa8e-ed5de27efea6" width="300"/>
 </p>
